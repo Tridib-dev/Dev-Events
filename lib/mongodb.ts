@@ -26,7 +26,12 @@ globalForMongoose.mongooseCache = cached;
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
   if (cached.conn) {
-    return cached.conn;
+    if (cached.conn.connection.readyState === 1) {
+      return cached.conn;
+    }
+
+    cached.conn = null;
+    cached.promise = null;
   }
 
   if (!cached.promise) {
@@ -35,10 +40,14 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       .connect(VERIFIED_MONGODB_URI, {
         bufferCommands: false,
       })
-      .then((mongooseInstance) => mongooseInstance);
+      .catch((error: unknown) => {
+        cached.promise = null;
+        throw error;
+      });
   }
 
   cached.conn = await cached.promise;
+  cached.promise = null;
   return cached.conn;
 }
 
