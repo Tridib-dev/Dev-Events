@@ -13,6 +13,14 @@ export interface EventProps{
     time : string;
 }
 
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
+};
+
 const EventCard = ({title,image,slug,location,date,time} : EventProps) => {
     const handleClick = () => {
         posthog.capture('event_card_clicked', {
@@ -24,24 +32,27 @@ const EventCard = ({title,image,slug,location,date,time} : EventProps) => {
     };
 
     return (
-        <Link href={`/events`} id="event-card" onClick={handleClick}>
-            <Image src={image} alt={title} width={410} height={300} className="poster" />
-            <div className="flex flex-row gap-2">
+        <Link href={`/events/${slug}`} id="event-card" onClick={handleClick}>
+            <Image src={image} alt={title} width={410} height={300} className="poster" priority/>
+            <div className="flex flex-row gap-2 items-center">
                 <Image src="/icons/pin.svg" alt="" width={14} height={14}/>
                 <p>{location}</p>
             </div>
             <p className="title">{title}</p>
-            <div>
-                <Image src="/icons/calendar.svg" alt="date" width={14} height={14}/>
-                <p>{date}</p>
-            </div>
 
-            <div>
-                <Image src="/icons/clock.svg" alt="time" width={14} height={14}/>
-                <p>{time}</p>
+            <div className="flex flex-row items-center gap-4">
+                <div className="flex flex-row items-center gap-2">
+                    <Image src="/icons/calendar.svg" alt="date" width={14} height={14}/>
+                    <p>{formatDate(date)}</p>
+                </div>
+                <div className="flex flex-row items-center gap-2">
+                    <Image src="/icons/clock.svg" alt="time" width={14} height={14}/>
+                    <p>{time}</p>
+                </div>
             </div>
         </Link>
     )
 };
+
 
 export default EventCard;

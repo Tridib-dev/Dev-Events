@@ -130,7 +130,7 @@ const eventSchema = new Schema<IEvent>(
   }
 );
 
-eventSchema.index({ slug: 1 }, { unique: true });
+
 
 eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) {
   for (const field of REQUIRED_STRING_FIELDS) {
