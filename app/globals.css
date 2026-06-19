@@ -107,6 +107,58 @@
 }
 
 @layer base {
+  .toast-success {
+    background: #0a1612;
+    border: 1px solid #134e3a;
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 380px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .toast-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #0f6e56;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toast-check {
+    stroke-dasharray: 18;
+    stroke-dashoffset: 18;
+    animation: draw 0.4s 0.2s ease forwards;
+  }
+
+  .toast-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #e1f5ee;
+  }
+
+  .toast-subtitle {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #5dcaa5;
+  }
+
+  @keyframes draw {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toast-check {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -175,7 +227,7 @@
     @apply flex flex-col gap-3;
 
     .poster {
-      @apply h-[300px] w-full rounded-lg object-cover;
+      @apply h-[300px] w-full rounded-lg object-cover left-1;
     }
 
     .title {

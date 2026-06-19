@@ -4,7 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import LightRays from '@/components/LightRays';
 import Navbar from "@/components/Navbar";
-
+import { Toaster } from "sonner";
 
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
@@ -30,12 +30,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en" className={cn("font-sans", geist.variable)}
-    >
-      <Navbar/>
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className={`${SchibstedGrotesk.variable} ${MartianMono.variable} min-h-screen h-full antialiased`}>
-        <div className="absolute inset-0 top-0 z -[-1] min-h-screen">
+
+
+        <Toaster richColors position="top-center" />
+        <Navbar />  {/* ✅ Moved inside <body> */}
+        <div className="absolute inset-0 top-0 z-[-1] min-h-screen">
           <LightRays
             raysOrigin="top-center-offset"
             raysColor="#06B6D4"
