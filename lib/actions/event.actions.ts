@@ -20,7 +20,7 @@ export const getSimilaryEventsBySlug = async (slug : string) => {
 
         
     }catch(e){
-        console.error("Failed to fetch similar events by slug:", error);
+        console.error("Failed to fetch similar events by slug:", e);
         return []
     }
 }
