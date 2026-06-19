@@ -1,11 +1,16 @@
 import EventCard from '@/components/EventCard';
 import Explore from '@/components/Explore';
 import { IEvent } from '@/database';
+import { cacheLife } from 'next/cache';
+
 
 
 const public_url = process.env.NEXT_PUBLIC_BASE_URL;
 
 const Page = async () => {
+  'use cache';
+  cacheLife('minutes')
+
   let events = [];
   try {
     const response = await fetch(`${public_url}/api/events/`);

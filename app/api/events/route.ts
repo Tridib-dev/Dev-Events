@@ -21,10 +21,11 @@ export async function POST(req:NextRequest) {
     }
 
     // Validate image presence
-    const file = formData.get('image') as File | null;
-    if (!file) {
+    const fileEntry = formData.get("image");
+    if (!(fileEntry instanceof File) || fileEntry.size === 0) {
       return NextResponse.json({ message: 'Image File is required' }, { status: 400 });
     }
+    const file = fileEntry;
 
     let tags = (formData.get('tags') as string).split(',');
     let agenda = (formData.get('agenda') as string).split(',');
