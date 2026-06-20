@@ -8,6 +8,7 @@ export interface IBooking {
   email: string;
   createdAt: Date;
   updatedAt: Date;
+  slug? : string;
 }
 
 type BookingDocument = HydratedDocument<IBooking>;
@@ -29,6 +30,12 @@ const bookingSchema = new Schema<IBooking>(
         validator: (value: string) => EMAIL_REGEX.test(value),
         message: "Invalid email format.",
       },
+      slug : {
+        type : String,
+        required : true,
+        trim : true,
+        lowercase : true,
+      }
     },
   },
   {
@@ -36,7 +43,7 @@ const bookingSchema = new Schema<IBooking>(
   }
 );
 
-bookingSchema.index({ eventId: 1 });
+ bookingSchema.index({ eventId: 1, email: 1 }, { unique: true });
 
 bookingSchema.pre("save", async function validateBooking(this: BookingDocument) {
   this.email = this.email.trim().toLowerCase();
@@ -48,7 +55,9 @@ bookingSchema.pre("save", async function validateBooking(this: BookingDocument) 
   // Ensure each booking references a real event document.
   if (this.isModified("eventId")) {
     const session = this.$session();
-    const eventExists = await Event.exists({ _id: this.eventId }).session(session ?? null);
+    const eventExists = session
+      ? await Event.exists({ _id: this.eventId }).session(session)
+      : await Event.exists({ _id: this.eventId });
 
     if (!eventExists) {
       throw new Error("Cannot create booking: referenced event does not exist.");
