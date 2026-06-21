@@ -9,9 +9,14 @@ import { toast } from "sonner";
 const BookEvent = ({eventId,slug} : {eventId : string;slug:string}) => {
     const [email,setEmail] = useState('');
     const [submitted,setsubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    
 
     const handleSubmit = async (e : React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (isSubmitting) return; // ✅ prevent double-submit
+        setIsSubmitting(true);
         const {success , error} = await CreateBooking({ eventId , slug , email});
         const errorMessage =
             error instanceof Error
@@ -49,6 +54,7 @@ const BookEvent = ({eventId,slug} : {eventId : string;slug:string}) => {
             posthog.captureException(error);
             toast.error(errorMessage);
         }
+        setIsSubmitting(false);
     };
 
   return (
@@ -84,8 +90,8 @@ const BookEvent = ({eventId,slug} : {eventId : string;slug:string}) => {
                         Enter a valid email like user@domain.com
                     </p>
                 </div>
-                <button type="submit" className="button-submit">
-                    Submit
+                <button type="submit" className="button-submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Submitting..." : "Submit"}
                 </button>
             </form>
         )}
