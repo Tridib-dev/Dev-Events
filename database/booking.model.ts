@@ -3,6 +3,7 @@ import Event from "./event.model";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// TODO : the email field will later be replaced by session.user.email once you add authentication
 export interface IBooking {
   eventId: Types.ObjectId;
   email: string;
