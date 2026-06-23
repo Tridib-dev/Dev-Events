@@ -1,7 +1,7 @@
 // app/events/[slug]/page.tsx
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
-import { getSimilaryEventsBySlug } from "@/lib/actions/event.actions";
+import { getSimilarEventsBySlug } from "@/lib/actions/event.actions";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -64,7 +64,7 @@ async function EventContent({ slug }: { slug: string }) {
         agenda 
     } = event;
 
-    const similarEvents = await getSimilaryEventsBySlug(slug);
+    const similarEvents = await getSimilarEventsBySlug(slug);
 
     return (
         <>
