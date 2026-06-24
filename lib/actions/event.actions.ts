@@ -1,3 +1,5 @@
+// lib/actions/event.actions.ts
+
 'use server'
 
 import { Event } from "@/database/event.model";

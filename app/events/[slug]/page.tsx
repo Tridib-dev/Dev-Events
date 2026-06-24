@@ -6,6 +6,9 @@ import type { IAgendaItem } from "@/database/event.model";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import Link from "next/link";
+
+import { getTagLink, getCategoryLink, getCityLink } from "@/lib/event-links";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -24,6 +27,8 @@ type SimilarEvent = {
     date: string;
     time: string;
     image: string;
+    mode?: string;
+    tags?: string[];
 };
 
 const Agenda = ({ agendaItems }: { agendaItems: IAgendaItem[] }) => (
@@ -43,9 +48,15 @@ const Agenda = ({ agendaItems }: { agendaItems: IAgendaItem[] }) => (
 );
 
 const EventTags = ({ tags }: { tags: string[] }) => (
-    <div className="flex flex-row gap-1.5 flex-wrap">
+    <div className="flex flex-row gap-1.5 flex-wrap mt-4">
         {tags?.map((tag, index) => (
-            <div className="pill" key={index}>{tag}</div>
+            <Link 
+                key={index} 
+                href={getTagLink(tag)} 
+                className="pill"
+            >
+                {tag}
+            </Link>
         ))}
     </div>
 );
@@ -72,7 +83,11 @@ async function EventContent({ slug }: { slug: string }) {
         mode, 
         audience, 
         tags,
-        agenda 
+        agenda,
+        category,
+        city,
+        state,
+        country
     } = event;
 
     const similarEvents = (await getSimilarEventsBySlug(slug)) as SimilarEvent[];
@@ -104,14 +119,32 @@ async function EventContent({ slug }: { slug: string }) {
                         <h2>Event Details</h2>
                         <EventDetailItem icon="/icons/calendar.svg" alt="calendar" label={date} />
                         <EventDetailItem icon="/icons/clock.svg" alt="time" label={time} />
-                        <EventDetailItem icon="/icons/pin.svg" alt="location" label={location} />
-                        
+
+                        {/* Clickable Location */}
+                        <Link
+                            href={getCityLink({ city, state, country })}
+                            className="flex items-center gap-2 hover:underline hover:text-blue-600 transition-colors"
+                        >
+                            <Image src="/icons/pin.svg" alt="location" width={17} height={17} />
+                            <p>{location}</p>
+                        </Link>
+
                         {address && (
                             <EventDetailItem icon="/icons/pin.svg" alt="address" label={address} />
                         )}
 
                         <EventDetailItem icon="/icons/mode.svg" alt="mode" label={mode} />
                         <EventDetailItem icon="/icons/audience.svg" alt="audience" label={audience} />
+
+                        {/* Clickable Category */}
+                        {category && (
+                            <Link
+                                href={getCategoryLink(category)}
+                                className="flex items-center gap-2 hover:underline hover:text-blue-600 transition-colors"
+                            >
+                                <span className="font-medium">Category:</span> {category}
+                            </Link>
+                        )}
                     </section>
 
                     {agenda && agenda.length > 0 && <Agenda agendaItems={agenda} />}

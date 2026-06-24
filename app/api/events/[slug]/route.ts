@@ -1,3 +1,5 @@
+// app/api/events/[slug]/route.ts
+
 import mongoose, { type HydratedDocument } from "mongoose";
 import { NextResponse } from "next/server";
 

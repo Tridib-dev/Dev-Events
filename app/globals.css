@@ -669,9 +669,17 @@
       @apply flex flex-row gap-2;
     }
   }
-
   .pill {
     @apply bg-dark-100 text-light-100 text-xs rounded-[6px] px-5 py-2;
+    transition: all 0.25s ease-in-out;   /* ← This was missing */
+    display: inline-block;
+    text-decoration: none;
+  }
+  .pill:hover {
+    background-color: #2563eb;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.3); /* optional nice touch */
   }
 
   #book-event {
