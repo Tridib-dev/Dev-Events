@@ -1,93 +1,11 @@
 'use client';
 
 import React, { useMemo, useRef, useState } from "react";
+import { ALL_TAGS } from "@/lib/constants/event-taxonomy";
 
 export interface TagPickerProps {
     onChange: (tags: string[]) => void;
 }
-
-interface TagGroup {
-    category: string;
-    tags: string[];
-}
-
-const TAG_TAXONOMY: TagGroup[] = [
-    {
-        category: "Developer Events",
-        tags: [
-            "Web Development", "Frontend", "Backend", "Full Stack", "JavaScript",
-            "TypeScript", "React", "Next.js", "Node.js", "Python", "Java", "Go",
-            "Rust", "DevOps", "Cloud Computing", "AWS", "Azure", "Google Cloud",
-            "Kubernetes", "Docker", "Cybersecurity", "Open Source",
-            "Mobile Development", "Android", "iOS", "Flutter", "React Native",
-            "Game Development", "AR/VR",
-        ],
-    },
-    {
-        category: "AI & Data",
-        tags: [
-            "Artificial Intelligence", "Machine Learning", "Deep Learning",
-            "Generative AI", "LLMs", "AI Agents", "Computer Vision", "NLP",
-            "Data Science", "Data Analytics", "MLOps", "Prompt Engineering",
-            "RAG", "Vector Databases",
-        ],
-    },
-    {
-        category: "Startup & Entrepreneurship",
-        tags: [
-            "Startups", "Entrepreneurship", "Founders", "Venture Capital",
-            "Fundraising", "Product Management", "Growth", "Marketing", "Sales",
-            "SaaS", "No-Code", "Indie Hackers",
-        ],
-    },
-    {
-        category: "Event Formats",
-        tags: [
-            "Conference", "Meetup", "Workshop", "Webinar", "Hackathon", "Seminar",
-            "Panel Discussion", "Networking Event", "Product Launch", "Demo Day",
-            "Fireside Chat", "Bootcamp", "Competition", "Career Fair",
-        ],
-    },
-    {
-        category: "Student Events",
-        tags: [
-            "Student Community", "College Fest", "Coding Contest",
-            "Placement Preparation", "Study Abroad", "Research", "Innovation",
-            "Campus Event",
-        ],
-    },
-    {
-        category: "Professional Development",
-        tags: [
-            "Leadership", "Public Speaking", "Career Development",
-            "Resume Building", "Interview Preparation", "Networking",
-            "Personal Branding",
-        ],
-    },
-    {
-        category: "Industry Tags",
-        tags: [
-            "FinTech", "HealthTech", "EdTech", "ClimateTech", "E-Commerce",
-            "Robotics", "Blockchain", "Web3", "IoT", "Aerospace", "Automotive",
-            "Gaming",
-        ],
-    },
-    {
-        category: "Experience Level",
-        tags: ["Beginner", "Intermediate", "Advanced", "Expert"],
-    },
-    {
-        category: "Audience Tags",
-        tags: [
-            "Students", "Developers", "Designers", "Founders", "Researchers",
-            "Investors", "Recruiters", "Product Managers",
-        ],
-    },
-];
-
-const ALL_TAGS = TAG_TAXONOMY.flatMap((group) =>
-    group.tags.map((tag) => ({ tag, category: group.category }))
-);
 
 const TagPicker = ({ onChange }: TagPickerProps) => {
     const [selected, setSelected] = useState<string[]>([]);

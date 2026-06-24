@@ -2,6 +2,7 @@
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
 import { getSimilarEventsBySlug } from "@/lib/actions/event.actions";
+import type { IAgendaItem } from "@/database/event.model";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -15,7 +16,17 @@ const EventDetailItem = ({ icon, alt, label }: { icon: string; alt: string; labe
     </div>
 );
 
-const Agenda = ({ agendaItems }: { agendaItems: any[] }) => (
+type SimilarEvent = {
+    _id: string;
+    title: string;
+    slug: string;
+    location: string;
+    date: string;
+    time: string;
+    image: string;
+};
+
+const Agenda = ({ agendaItems }: { agendaItems: IAgendaItem[] }) => (
     <div className="agenda">
         <h2>Agenda</h2>
         <ul className="space-y-4">
@@ -64,7 +75,7 @@ async function EventContent({ slug }: { slug: string }) {
         agenda 
     } = event;
 
-    const similarEvents = await getSimilarEventsBySlug(slug);
+    const similarEvents = (await getSimilarEventsBySlug(slug)) as SimilarEvent[];
 
     return (
         <>
@@ -125,7 +136,7 @@ async function EventContent({ slug }: { slug: string }) {
                 <h2>Similar Events</h2>
                 <div className="events">
                     {similarEvents.length > 0 &&
-                        similarEvents.map((similarEvent: any) => (
+                        similarEvents.map((similarEvent) => (
                             <EventCard 
                                 key={String(similarEvent._id)} 
                                 {...similarEvent} 

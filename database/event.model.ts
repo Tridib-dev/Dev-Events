@@ -31,6 +31,11 @@ export interface IEvent {
   organizer: string;
   organizerEmails: string[];
   tags: string[];
+  tagSlugs?: string[];
+  countrySlug?: string;
+  stateSlug?: string;
+  citySlug?: string;
+  categorySlug?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -188,6 +193,16 @@ const eventSchema = new Schema<IEvent>(
         message: "tags must contain at least one item.",
       },
     },
+
+    tagSlugs: {
+      type: [{ type: String, trim: true, lowercase: true }],
+      default: [],
+    },
+
+    countrySlug: { type: String, trim: true, lowercase: true },
+    stateSlug: { type: String, trim: true, lowercase: true },
+    citySlug: { type: String, trim: true, lowercase: true },
+    categorySlug: { type: String, trim: true, lowercase: true },
   },
   {
     timestamps: true,
@@ -215,9 +230,16 @@ eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) 
       throw new Error(`${field} is required and cannot be empty.`);
     }
 
-    // Other fields are plain strings; cast to any to satisfy indexed assignment
-    this[field] = value.trim() as any;
+    this.set(field, value.trim());
   }
+
+  this.tagSlugs = Array.from(
+    new Set((this.tags ?? []).map((tag) => createSlug(tag)).filter(Boolean))
+  );
+  this.countrySlug = createSlug(this.country);
+  this.stateSlug = createSlug(this.state);
+  this.citySlug = createSlug(this.city);
+  this.categorySlug = createSlug(this.category);
 
   // if (typeof this.lat !== "number" || Number.isNaN(this.lat)) {
   //   throw new Error("lat must be a valid number.");

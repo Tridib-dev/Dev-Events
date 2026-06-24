@@ -39,7 +39,7 @@ export async function validateEmail(email: string): Promise<EmailValidationResul
         if (!records || records.length === 0) {
             return { valid: false, reason: "This email domain can't receive mail. Double-check for typos." };
         }
-    } catch (err) {
+    } catch {
         // Domain doesn't exist or has no mail server at all
         return { valid: false, reason: "This email domain doesn't seem to exist. Double-check for typos." };
     }
