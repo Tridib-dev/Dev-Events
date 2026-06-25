@@ -1,3 +1,5 @@
+// app/api/events/[slug]/route.ts
+
 import mongoose, { type HydratedDocument } from "mongoose";
 import { NextResponse } from "next/server";
 
@@ -35,13 +37,24 @@ const toEventPayload = (eventDocument: HydratedDocument<IEvent>): EventPayload =
   image: eventDocument.image,
   venue: eventDocument.venue,
   location: eventDocument.location,
+  address: eventDocument.address,
+  city: eventDocument.city,
+  state: eventDocument.state,
+  country: eventDocument.country,
+  category: eventDocument.category,
   date: eventDocument.date,
   time: eventDocument.time,
   mode: eventDocument.mode,
   audience: eventDocument.audience,
   agenda: eventDocument.agenda,
   organizer: eventDocument.organizer,
+  organizerEmails: eventDocument.organizerEmails,
   tags: eventDocument.tags,
+  tagSlugs: eventDocument.tagSlugs,
+  countrySlug: eventDocument.countrySlug,
+  stateSlug: eventDocument.stateSlug,
+  citySlug: eventDocument.citySlug,
+  categorySlug: eventDocument.categorySlug,
   createdAt: eventDocument.createdAt,
   updatedAt: eventDocument.updatedAt,
 });

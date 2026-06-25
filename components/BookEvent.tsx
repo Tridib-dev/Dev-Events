@@ -44,7 +44,7 @@ const BookEvent = ({eventId,slug} : {eventId : string;slug:string}) => {
                   </svg>
                 </div>
                 <div>
-                  <p className="toast-title">You're signed up</p>
+                  <p className="toast-title">You&apos;re signed up</p>
                   <p className="toast-subtitle">Check your email for confirmation</p>
                 </div>
               </div>

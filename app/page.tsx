@@ -1,7 +1,7 @@
 import EventCard from '@/components/EventCard';
 import Explore from '@/components/Explore';
 import { IEvent } from '@/database';
-import { cacheLife } from 'next/cache';
+import { cacheLife, cacheTag } from 'next/cache';
 
 
 
@@ -9,6 +9,7 @@ const public_url = process.env.NEXT_PUBLIC_BASE_URL;
 
 const Page = async () => {
   'use cache';
+  cacheTag('events');
   cacheLife('hours')
 
   let events = [];
@@ -47,6 +48,5 @@ const Page = async () => {
 };
 
 export default Page;
-
 
 

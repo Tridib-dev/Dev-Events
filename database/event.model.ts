@@ -1,4 +1,11 @@
 import { HydratedDocument, Model, Schema, model, models } from "mongoose";
+import { EVENT_CATEGORIES, EventCategory } from "@/lib/constants/event-categories";
+
+export interface IAgendaItem {
+  startTime: string;
+  endTime: string;
+  keynote: string;
+}
 
 export interface IEvent {
   title: string;
@@ -8,13 +15,27 @@ export interface IEvent {
   image: string;
   venue: string;
   location: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  // lat: number;
+  // lng: number;
+  // placeId: string;
+  category: EventCategory;
   date: string;
   time: string;
   mode: string;
   audience: string;
-  agenda: string[];
+  agenda: IAgendaItem[];
   organizer: string;
+  organizerEmails: string[];
   tags: string[];
+  tagSlugs?: string[];
+  countrySlug?: string;
+  stateSlug?: string;
+  citySlug?: string;
+  categorySlug?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +49,12 @@ type RequiredStringField =
   | "image"
   | "venue"
   | "location"
+  | "address"
+  | "city"
+  | "state"
+  | "country"
+  // | "placeId"
+  | "category"
   | "date"
   | "time"
   | "mode"
@@ -41,6 +68,12 @@ const REQUIRED_STRING_FIELDS: RequiredStringField[] = [
   "image",
   "venue",
   "location",
+  "address",
+  "city",
+  "state",
+  "country",
+  // "placeId",
+  "category",
   "date",
   "time",
   "mode",
@@ -94,6 +127,15 @@ const normalizeTime = (value: string): string => {
   return `${String(hour24).padStart(2, "0")}:${minutes}`;
 };
 
+const agendaItemSchema = new Schema<IAgendaItem>(
+  {
+    startTime: { type: String, required: true, trim: true },
+    endTime: { type: String, required: true, trim: true },
+    keynote: { type: String, required: true, trim: true },
+  },
+  { _id: false }
+);
+
 const eventSchema = new Schema<IEvent>(
   {
     title: { type: String, required: true, trim: true },
@@ -103,19 +145,46 @@ const eventSchema = new Schema<IEvent>(
     image: { type: String, required: true, trim: true },
     venue: { type: String, required: true, trim: true },
     location: { type: String, required: true, trim: true },
+
+    // --- New: structured location, populated via map picker (Phase 2) ---
+    address: { type: String, required: true, trim: true },
+    city: { type: String, required: true, trim: true },
+    state: { type: String, required: true, trim: true },
+    country: { type: String, required: true, trim: true },
+    // lat: { type: Number, required: true },
+    // lng: { type: Number, required: true },
+    // placeId: { type: String, required: false, trim: true },
+
+    // --- New: event format/category ---
+    category: { type: String, required: true, enum: EVENT_CATEGORIES },
+
     date: { type: String, required: true, trim: true },
     time: { type: String, required: true, trim: true },
     mode: { type: String, required: true, trim: true },
     audience: { type: String, required: true, trim: true },
+
+    // --- Changed: agenda is now an array of structured objects ---
     agenda: {
-      type: [{ type: String, trim: true }],
+      type: [agendaItemSchema],
       required: true,
       validate: {
-        validator: (value: string[]) => value.length > 0,
+        validator: (value: IAgendaItem[]) => value.length > 0,
         message: "agenda must contain at least one item.",
       },
     },
+
     organizer: { type: String, required: true, trim: true },
+
+    // --- Changed: organizerEmail (single) -> organizerEmails (array) ---
+    organizerEmails: {
+      type: [{ type: String, trim: true, lowercase: true }],
+      required: true,
+      validate: {
+        validator: (value: string[]) => value.length > 0,
+        message: "organizerEmails must contain at least one item.",
+      },
+    },
+
     tags: {
       type: [{ type: String, trim: true }],
       required: true,
@@ -124,35 +193,110 @@ const eventSchema = new Schema<IEvent>(
         message: "tags must contain at least one item.",
       },
     },
+
+    tagSlugs: {
+      type: [{ type: String, trim: true, lowercase: true }],
+      default: [],
+    },
+
+    countrySlug: { type: String, trim: true, lowercase: true },
+    stateSlug: { type: String, trim: true, lowercase: true },
+    citySlug: { type: String, trim: true, lowercase: true },
+    categorySlug: { type: String, trim: true, lowercase: true },
   },
   {
     timestamps: true,
   }
 );
 
-
-
 eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) {
   for (const field of REQUIRED_STRING_FIELDS) {
     const value = this[field];
+
+    // Special-case category because its type is a literal union (EventCategory)
+    if (field === "category") {
+      if (typeof value !== "string" || value.trim().length === 0) {
+        throw new Error(`${field} is required and cannot be empty.`);
+      }
+      const trimmed = value.trim();
+      if (!EVENT_CATEGORIES.includes(trimmed as EventCategory)) {
+        throw new Error(`Invalid category "${trimmed}".`);
+      }
+      this.category = trimmed as EventCategory;
+      continue;
+    }
 
     if (typeof value !== "string" || value.trim().length === 0) {
       throw new Error(`${field} is required and cannot be empty.`);
     }
 
-    this[field] = value.trim();
+    this.set(field, value.trim());
   }
 
+  this.tagSlugs = Array.from(
+    new Set((this.tags ?? []).map((tag) => createSlug(tag)).filter(Boolean))
+  );
+  this.countrySlug = createSlug(this.country);
+  this.stateSlug = createSlug(this.state);
+  this.citySlug = createSlug(this.city);
+  this.categorySlug = createSlug(this.category);
+
+  // if (typeof this.lat !== "number" || Number.isNaN(this.lat)) {
+  //   throw new Error("lat must be a valid number.");
+  // }
+
+  // if (typeof this.lng !== "number" || Number.isNaN(this.lng)) {
+  //   throw new Error("lng must be a valid number.");
+  // }
+
+  // --- Agenda: structured validation + time normalization ---
   if (!Array.isArray(this.agenda) || this.agenda.length === 0) {
     throw new Error("agenda must contain at least one item.");
   }
 
-  this.agenda = this.agenda.map((item) => item.trim()).filter(Boolean);
+  this.agenda = this.agenda
+    .map((item) => ({
+      startTime: item.startTime?.trim(),
+      endTime: item.endTime?.trim(),
+      keynote: item.keynote?.trim(),
+    }))
+    .filter((item) => item.startTime && item.endTime && item.keynote);
 
   if (this.agenda.length === 0) {
-    throw new Error("agenda must contain non-empty items.");
+    throw new Error("agenda must contain valid items with startTime, endTime, and keynote.");
   }
 
+  this.agenda = this.agenda.map((item) => {
+    const normalizedStart = normalizeTime(item.startTime);
+    const normalizedEnd = normalizeTime(item.endTime);
+
+    if (normalizedEnd <= normalizedStart) {
+      throw new Error(
+        `Agenda item "${item.keynote}" has an end time that isn't after its start time.`
+      );
+    }
+
+    return {
+      startTime: normalizedStart,
+      endTime: normalizedEnd,
+      keynote: item.keynote,
+    };
+  });
+
+  // --- organizerEmails ---
+  if (!Array.isArray(this.organizerEmails) || this.organizerEmails.length === 0) {
+    throw new Error("organizerEmails must contain at least one item.");
+  }
+
+  this.organizerEmails = this.organizerEmails
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (this.organizerEmails.length === 0) {
+    throw new Error("organizerEmails must contain non-empty items.");
+  }
+
+  // --- tags ---
   if (!Array.isArray(this.tags) || this.tags.length === 0) {
     throw new Error("tags must contain at least one item.");
   }
@@ -176,6 +320,17 @@ eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) 
   this.date = normalizeDateToIso(this.date);
   this.time = normalizeTime(this.time);
 });
+
+eventSchema.index({ tags: 1 });
+eventSchema.index({ tagSlugs: 1 });
+eventSchema.index({ category: 1 });
+eventSchema.index({ categorySlug: 1 });
+eventSchema.index({ country: 1, state: 1, city: 1 });
+eventSchema.index({ countrySlug: 1, stateSlug: 1, citySlug: 1 });
+eventSchema.index({ mode: 1 });
+eventSchema.index({ date: 1 });
+eventSchema.index({ title: "text", description: "text", overview: "text", venue: "text" });
+
 
 const Event = (models.Event as EventModel | undefined) ?? model<IEvent>("Event", eventSchema);
 

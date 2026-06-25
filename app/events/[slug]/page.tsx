@@ -1,43 +1,65 @@
 // app/events/[slug]/page.tsx
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
-import { Booking, IEvent } from "@/database";
-import { getSimilaryEventsBySlug } from "@/lib/actions/event.actions";
-import { cacheLife } from "next/cache";
+import { getSimilarEventsBySlug } from "@/lib/actions/event.actions";
+import type { IAgendaItem } from "@/database/event.model";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { cache, Suspense } from "react";
+import { Suspense } from "react";
+import Link from "next/link";
 
+import { getTagLink, getCategoryLink, getCityLink } from "@/lib/event-links";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-const EventDetailItem = ({ icon, alt, label } : { icon : string ; alt : string;label : string}) => (
-    <div className="flex-row-gap-2 items-center">
-        <Image src={icon} alt={alt} width={17} height={17}/>
+const EventDetailItem = ({ icon, alt, label }: { icon: string; alt: string; label: string;}) => (
+    <div className="flex items-center gap-2">
+        <Image src={icon} alt={alt} width={17} height={17} />
         <p>{label}</p>
     </div>
 );
 
-const Agenda = ({ agendaItems } : { agendaItems : string[] }) => (
+type SimilarEvent = {
+    _id: string;
+    title: string;
+    slug: string;
+    location: string;
+    date: string;
+    time: string;
+    image: string;
+    mode?: string;
+    tags?: string[];
+};
+
+const Agenda = ({ agendaItems }: { agendaItems: IAgendaItem[] }) => (
     <div className="agenda">
         <h2>Agenda</h2>
-        <ul>
-            {agendaItems.map((item,index) => (
-                <li key ={index}>{item}</li>
+        <ul className="space-y-4">
+            {agendaItems?.map((item, index) => (
+                <li key={index} className="flex gap-4">
+                    <div className="text-sm text-gray-400 min-w-30">
+                        {item.startTime} — {item.endTime}
+                    </div>
+                    <div>{item.keynote}</div>
+                </li>
             ))}
         </ul>
     </div>
-)
+);
 
-const EventTags = ({ tags } : {tags : string[] }) => (
-    <div className="flex flex-row gap-1.5 flex-wrap">
-        {tags.map((tag,index) => (
-            <div className="pill" key={index}>{tag}</div>
+const EventTags = ({ tags }: { tags: string[] }) => (
+    <div className="flex flex-row gap-1.5 flex-wrap mt-4">
+        {tags?.map((tag, index) => (
+            <Link 
+                key={index} 
+                href={getTagLink(tag)} 
+                className="pill"
+            >
+                {tag}
+            </Link>
         ))}
     </div>
-)
-
-const bookings = 10;
+);
 
 async function EventContent({ slug }: { slug: string }) {
     const request = await fetch(`${BASE_URL}/api/events/${slug}`);
@@ -47,12 +69,28 @@ async function EventContent({ slug }: { slug: string }) {
     }
 
     const { event, organizer } = await request.json();
-    if (!event?.description) {
-        notFound();
-    }
 
-    const { description, image, overview, date, time, location, mode, agenda, audience, tags } = event;
-    const similarEvents = await getSimilaryEventsBySlug(slug);
+    if (!event) notFound();
+
+    const { 
+        description, 
+        image, 
+        overview, 
+        date, 
+        time, 
+        location, 
+        address,
+        mode, 
+        audience, 
+        tags,
+        agenda,
+        category,
+        city,
+        state,
+        country
+    } = event;
+
+    const similarEvents = (await getSimilarEventsBySlug(slug)) as SimilarEvent[];
 
     return (
         <>
@@ -63,7 +101,14 @@ async function EventContent({ slug }: { slug: string }) {
 
             <div className="details">
                 <div className="content">
-                    <Image className="banner" src={image} alt="Event Banner" width={800} height={800} priority />
+                    <Image 
+                        className="banner" 
+                        src={image} 
+                        alt="Event Banner" 
+                        width={800} 
+                        height={800} 
+                        priority 
+                    />
 
                     <section className="flex-col-gap-2">
                         <h2>Overview</h2>
@@ -74,30 +119,48 @@ async function EventContent({ slug }: { slug: string }) {
                         <h2>Event Details</h2>
                         <EventDetailItem icon="/icons/calendar.svg" alt="calendar" label={date} />
                         <EventDetailItem icon="/icons/clock.svg" alt="time" label={time} />
-                        <EventDetailItem icon="/icons/pin.svg" alt="location" label={location} />
+
+                        {/* Clickable Location */}
+                        <Link
+                            href={getCityLink({ city, state, country })}
+                            className="flex items-center gap-2 hover:underline hover:text-blue-600 transition-colors"
+                        >
+                            <Image src="/icons/pin.svg" alt="location" width={17} height={17} />
+                            <p>{location}</p>
+                        </Link>
+
+                        {address && (
+                            <EventDetailItem icon="/icons/pin.svg" alt="address" label={address} />
+                        )}
+
                         <EventDetailItem icon="/icons/mode.svg" alt="mode" label={mode} />
                         <EventDetailItem icon="/icons/audience.svg" alt="audience" label={audience} />
+
+                        {/* Clickable Category */}
+                        {category && (
+                            <Link
+                                href={getCategoryLink(category)}
+                                className="flex items-center gap-2 hover:underline hover:text-blue-600 transition-colors"
+                            >
+                                <span className="font-medium">Category:</span> {category}
+                            </Link>
+                        )}
                     </section>
 
-                    <Agenda agendaItems={agenda || []} />
+                    {agenda && agenda.length > 0 && <Agenda agendaItems={agenda} />}
 
                     <section className="flex-col-gap-2">
                         <h2>About The Organizer</h2>
                         <p>{organizer}</p>
                     </section>
 
-                    <EventTags tags={tags || []} />
+                    {tags && tags.length > 0 && <EventTags tags={tags} />}
                 </div>
 
                 <aside className="booking">
                     <div className="signup-card">
                         <h2>Book Your Spot</h2>
-                        {bookings > 0 ? (
-                            <p className="text-sm">Join {bookings} people who have already booked their spot!</p>
-                        ) : (
-                            <p className="text-sm">Be the first to book your spot</p>
-                        )}
-                        <BookEvent eventId={event._id} slug={event.slug}/>
+                        <BookEvent eventId={event._id} slug={event.slug} />
                     </div>
                 </aside>
             </div>
@@ -106,10 +169,11 @@ async function EventContent({ slug }: { slug: string }) {
                 <h2>Similar Events</h2>
                 <div className="events">
                     {similarEvents.length > 0 &&
-                        similarEvents.map((similarEvent: any) => (
-                            <li key={String(similarEvent._id)}>
-                                <EventCard key={String(similarEvent._id)} {...similarEvent} />
-                            </li>
+                        similarEvents.map((similarEvent) => (
+                            <EventCard 
+                                key={String(similarEvent._id)} 
+                                {...similarEvent} 
+                            />
                         ))}
                 </div>
             </div>
@@ -126,7 +190,6 @@ export default function EventDetailsPage({ params }: { params: Promise<{ slug: s
         </section>
     );
 }
-
 
 async function EventContentResolver({ paramsPromise }: { paramsPromise: Promise<{ slug: string }> }) {
     const { slug } = await paramsPromise;
