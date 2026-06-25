@@ -321,6 +321,17 @@ eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) 
   this.time = normalizeTime(this.time);
 });
 
+eventSchema.index({ tags: 1 });
+eventSchema.index({ tagSlugs: 1 });
+eventSchema.index({ category: 1 });
+eventSchema.index({ categorySlug: 1 });
+eventSchema.index({ country: 1, state: 1, city: 1 });
+eventSchema.index({ countrySlug: 1, stateSlug: 1, citySlug: 1 });
+eventSchema.index({ mode: 1 });
+eventSchema.index({ date: 1 });
+eventSchema.index({ title: "text", description: "text", overview: "text", venue: "text" });
+
+
 const Event = (models.Event as EventModel | undefined) ?? model<IEvent>("Event", eventSchema);
 
 export { Event };

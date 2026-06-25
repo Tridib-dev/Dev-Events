@@ -569,6 +569,90 @@
     @apply opacity-60 cursor-not-allowed;
   }
 
+  #discover {
+    @apply flex flex-col gap-8;
+  }
+  
+  .discover-header {
+    @apply flex flex-col gap-5;
+  }
+  
+  .discover-search-bar {
+    @apply bg-dark-100 border-dark-200 flex w-full items-center rounded-full border px-2 py-1.5;
+  }
+  
+  .discover-search-bar input {
+    @apply bg-transparent flex-1 px-4 py-2 text-sm outline-none;
+  }
+  
+  .discover-search-divider {
+    @apply bg-dark-200 h-6 w-px;
+  }
+  
+  .discover-search-bar button {
+    @apply bg-primary hover:bg-primary/90 rounded-full px-5 py-2 text-sm font-semibold text-black cursor-pointer;
+  }
+  
+  .category-tabs {
+    @apply flex flex-row gap-2 overflow-x-auto pb-1;
+  }
+  
+  .category-tab {
+    @apply bg-dark-100 border-dark-200 text-light-200 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm;
+  }
+  
+  .category-tab.active {
+    @apply bg-primary border-primary text-black font-medium;
+  }
+  
+  .discover-body {
+    @apply flex flex-col lg:flex-row gap-10;
+  }
+  
+  .discover-sidebar {
+    @apply flex flex-col gap-5 lg:w-[280px] lg:flex-shrink-0;
+  }
+  
+  .discover-results {
+    @apply flex-1 flex flex-col gap-6;
+  }
+  
+  .discover-results-count {
+    @apply text-light-200 text-sm;
+  }
+  
+  .discover-tag-filter {
+    @apply flex flex-col gap-4 max-h-[360px] overflow-y-auto;
+  }
+  
+  .discover-tag-group-title {
+    @apply text-light-200 text-xs font-semibold uppercase tracking-wide mb-1.5;
+  }
+  
+  .discover-tag-checkbox {
+    @apply flex items-center gap-2 text-sm text-light-100 py-1 cursor-pointer;
+  }
+  
+  .discover-mode-filter {
+    @apply flex flex-row flex-wrap gap-2;
+  }
+  
+  .discover-mode-pill {
+    @apply bg-dark-200 text-light-200 rounded-full px-3 py-1 text-xs cursor-pointer;
+  }
+  
+  .discover-mode-pill.active {
+    @apply bg-primary text-black font-medium;
+  }
+  
+  .discover-pagination {
+    @apply flex items-center justify-center gap-6 text-sm text-light-200 mt-4;
+  }
+  
+  .discover-pagination a {
+    @apply text-primary hover:underline;
+  }
+  
 
   header {
     @apply glass sticky top-0 z-50;

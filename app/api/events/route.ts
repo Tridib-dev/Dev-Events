@@ -7,6 +7,8 @@ import { type EventCategory } from "@/lib/constants/event-categories";
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { validateEmails } from "@/lib/validateemail";
+import { slugifySegment } from "@/lib/seo-events";
+
 
 type AgendaItem = {
     startTime: string;
@@ -36,13 +38,13 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
 
         const eventFields = Object.fromEntries(formData.entries()) as Record<string, FormDataEntryValue>;
-        const slugValue = eventFields.slug;
 
-        if (typeof slugValue !== "string" || slugValue.trim().length === 0) {
-            return NextResponse.json({ message: "Slug is required" }, { status: 400 });
+        const title = String(eventFields.title ?? "").trim();
+        if (!title) {
+            return NextResponse.json({ message: "Title is required" }, { status: 400 });
         }
 
-        const slug = slugValue.trim();
+        const slug = slugifySegment(title);
 
         const organizerEmails = formData.getAll("organizerEmails") as string[];
         const emailCheck = await validateEmails(organizerEmails);
