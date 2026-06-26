@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import LightRays from "@/components/LightRays";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "sonner";
+import { Suspense } from "react";
+
 
 export const metadata: Metadata = {
   title: "Welcome to Dev Event",
@@ -19,7 +21,9 @@ export default function RootLayout({
     <html lang="en" className={cn("font-sans")}>
       <body className="min-h-screen h-full antialiased">
         <Toaster richColors position="top-center" />
-        <Navbar />
+        <Suspense fallback={null}>
+          <Navbar />
+        </Suspense>
         <div className="absolute inset-0 top-0 z-[-1] min-h-screen">
           <LightRays
             raysOrigin="top-center-offset"
