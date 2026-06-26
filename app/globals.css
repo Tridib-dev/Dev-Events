@@ -4,6 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --font-sans: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-schibsted-grotesk: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+  --font-martian-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
   --color-blue: #94eaff;
   --color-light-100: #e7f2ff;
   --color-light-200: #bdbdbd;

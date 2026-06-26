@@ -1,23 +1,9 @@
 import type { Metadata } from "next";
-import { Schibsted_Grotesk,Martian_Mono, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import LightRays from '@/components/LightRays';
+import LightRays from "@/components/LightRays";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "sonner";
-
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const SchibstedGrotesk = Schibsted_Grotesk({
-  variable: "--font-schibsted-grotesk",
-  subsets: ["latin"],
-});
-
-const MartianMono = Martian_Mono({
-  variable: "--font-martian-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Welcome to Dev Event",
@@ -30,12 +16,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body className={`${SchibstedGrotesk.variable} ${MartianMono.variable} min-h-screen h-full antialiased`}>
-
-
+    <html lang="en" className={cn("font-sans")}>
+      <body className="min-h-screen h-full antialiased">
         <Toaster richColors position="top-center" />
-        <Navbar /> 
+        <Navbar />
         <div className="absolute inset-0 top-0 z-[-1] min-h-screen">
           <LightRays
             raysOrigin="top-center-offset"
@@ -53,9 +37,7 @@ export default function RootLayout({
             saturation={1}
           />
         </div>
-        <main>
-          {children}
-        </main>
+        <main>{children}</main>
       </body>
     </html>
   );
