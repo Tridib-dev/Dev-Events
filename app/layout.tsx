@@ -35,7 +35,7 @@ export default function RootLayout({
 
 
         <Toaster richColors position="top-center" />
-        <Navbar />  {/* ✅ Moved inside <body> */}
+        <Navbar /> 
         <div className="absolute inset-0 top-0 z-[-1] min-h-screen">
           <LightRays
             raysOrigin="top-center-offset"
@@ -53,7 +53,9 @@ export default function RootLayout({
             saturation={1}
           />
         </div>
-        {children}
+        <main>
+          {children}
+        </main>
       </body>
     </html>
   );

@@ -168,7 +168,9 @@
   }
 
   main {
-    @apply mx-auto container flex flex-col sm:px-10 px-5 py-10;
+    @apply mx-auto container flex flex-col sm:px-10 px-5;
+    padding-top: 100px !important;   /* Increased for navbar + breathing room */
+    min-height: 100vh;
   }
 
   h1 {
@@ -182,6 +184,13 @@
   ul {
     @apply list-disc list-inside;
   }
+}
+
+.main {
+  padding-top: 100px !important;
+}
+.page-content {
+  padding-top: 100px;
 }
 
 @layer components {
@@ -654,26 +663,161 @@
   }
   
 
-  header {
-    @apply glass sticky top-0 z-50;
+  
 
-    nav {
-      @apply flex flex-row justify-between mx-auto container sm:px-10 px-5 py-4;
+  .navbar-wrapper {
+    @apply fixed top-0 inset-x-0 z-50 flex justify-center pt-4 px-4;
+  }
+
+  .navbar-floating {
+      @apply flex items-center justify-between gap-6 w-full max-w-3xl px-5 py-2.5;
+
+      max-width : none;
+      border-radius: 20px !important;
+
+      background: rgba(13, 22, 26, 0.96) !important;
+      backdrop-filter: blur(24px) saturate(180%) contrast(110%) !important;
+      -webkit-backdrop-filter: blur(24px) saturate(180%) contrast(110%) !important;
+
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;           /* Helps with clean edges */
+  }
+
+  /* Stronger scrolled state */
+  .navbar-scrolled {
+      background: rgba(13, 22, 26, 0.97);
+      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.4), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Noise layer on the whole navbar */
+  .navbar-floating::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    z-index: -1;
+    pointer-events: none;
+    
+    /* Finer, more visible grain */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+    mix-blend-mode: multiply;
+    opacity: 0.9;
+  }
+
+  /* Extra fine grain layer for depth */
+  .navbar-floating::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    z-index: -1;
+    pointer-events: none;
+    
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.2' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.25'/%3E%3C/svg%3E");
+    background-size: 90px 90px;
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+  }
+
+  .logo {
+      @apply flex flex-row items-center gap-2 flex-shrink-0;
+  }
+
+  .logo p {
+      @apply text-base font-bold italic max-sm:hidden;
+  }
+
+  .navbar-links-desktop {
+      @apply relative hidden md:flex items-center gap-1 flex-1 justify-center;
+  }
+
+  .navbar-pill-indicator {
+      @apply absolute top-0.5 bottom-0.5 left-0 bg-white/95;
+      border-radius: 12px;
+      transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1), 
+                  width 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  .navbar-pill-indicator::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.3;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+      background-size: 90px 90px;
+  }
+
+  /* Links */
+  .navbar-link {
+      @apply relative z-10 px-5 py-1.5 text-sm text-light-200 rounded-full transition-all;
+  }
+
+  .navbar-link-active {
+      color: #0d161a;
+      @apply font-semibold;
+  }
+
+  .navbar-link:hover:not(.navbar-link-active) {
+      @apply text-light-100;
+      color: #e5e5e5;
+  }
+
+  /* ==================== MOBILE ==================== */
+
+  .navbar-mobile-toggle {
+    @apply md:hidden flex items-center justify-center text-light-100 cursor-pointer p-2 z-30;
+  }
+
+  .navbar-mobile-menu {
+    @apply md:hidden fixed left-4 right-4 mx-auto flex flex-col gap-1 rounded-2xl px-5 py-5 z-50;
+
+    top: 92px;                    /* Adjust if needed based on navbar height */
+    background: rgba(13, 22, 26, 0.97);
+    backdrop-filter: blur(32px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-width: 380px;
+    width: calc(100% - 32px);
+  }
+
+  /* Optional: Nice entrance animation */
+  .navbar-mobile-menu {
+    animation: menuSlideDown 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes menuSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.96);
     }
-
-    .logo {
-      @apply flex flex-row items-center gap-2;
-
-      p {
-        @apply text-xl font-bold italic max-sm:hidden;
-      }
-    }
-
-    ul {
-      @apply flex flex-row items-center gap-6;
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
   }
 
+  /* Mobile links */
+  .navbar-mobile-link {
+    @apply text-light-200 text-[15px] px-5 py-3.5 rounded-xl transition-all active:scale-[0.97];
+  }
+
+  .navbar-mobile-link-active {
+    @apply bg-white/10 text-white font-medium;
+  }
+
+  main {
+    @apply pt-24;
+    min-height: 100vh;
+  }
+ 
   .events {
     @apply grid md:grid-cols-3 gap-10 sm:grid-cols-2 grid-cols-1;
   }
