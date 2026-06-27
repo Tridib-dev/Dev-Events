@@ -581,88 +581,219 @@
     @apply opacity-60 cursor-not-allowed;
   }
 
+  
+   
   #discover {
-    @apply flex flex-col gap-8;
+      @apply flex flex-col gap-8;
   }
   
   .discover-header {
-    @apply flex flex-col gap-5;
+      @apply flex flex-col gap-5;
   }
   
-  .discover-search-bar {
-    @apply bg-dark-100 border-dark-200 flex w-full items-center rounded-full border px-2 py-1.5;
+  /* --- Search bar: separated boxes, wraps cleanly on mobile --- */
+  .discover-search-row {
+      @apply flex flex-row flex-wrap items-stretch gap-2 w-full;
   }
   
-  .discover-search-bar input {
-    @apply bg-transparent flex-1 px-4 py-2 text-sm outline-none;
+  .discover-search-box {
+      @apply bg-dark-100 border-dark-200 flex items-center gap-2 rounded-full border px-4 py-2.5 flex-1 min-w-[220px];
   }
   
-  .discover-search-divider {
-    @apply bg-dark-200 h-6 w-px;
+  .discover-search-icon {
+      @apply text-light-200 flex-shrink-0;
   }
   
-  .discover-search-bar button {
-    @apply bg-primary hover:bg-primary/90 rounded-full px-5 py-2 text-sm font-semibold text-black cursor-pointer;
+  .discover-search-box input {
+      @apply bg-transparent flex-1 text-sm outline-none w-full;
   }
   
+  .discover-search-button {
+      @apply bg-primary hover:bg-primary/90 rounded-full px-6 py-2.5 text-sm font-semibold text-black cursor-pointer flex-shrink-0;
+  }
+  
+  @media (max-width: 640px) {
+      .discover-search-box {
+          @apply min-w-full;
+      }
+      .discover-search-button {
+          @apply w-full;
+      }
+  }
+  
+  /* --- Category tabs: scrollbar hidden cross-browser --- */
   .category-tabs {
-    @apply flex flex-row gap-2 overflow-x-auto pb-1;
+      @apply flex flex-row gap-2 overflow-x-auto pb-1;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+  }
+  
+  .category-tabs::-webkit-scrollbar {
+      display: none;
   }
   
   .category-tab {
-    @apply bg-dark-100 border-dark-200 text-light-200 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm;
+      @apply bg-dark-100 border-dark-200 text-light-200 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm flex-shrink-0;
   }
   
   .category-tab.active {
-    @apply bg-primary border-primary text-black font-medium;
+      @apply bg-primary border-primary text-black font-medium;
   }
   
+  /* --- Layout: sidebar + results --- */
   .discover-body {
-    @apply flex flex-col lg:flex-row gap-10;
+      @apply flex flex-col lg:flex-row gap-8 items-start;
+  }
+  
+  /* --- Filter toggle button --- */
+  .discover-filter-toggle {
+      @apply bg-dark-100 border-dark-200 text-light-100 flex items-center gap-2 rounded-full border px-4 py-2 text-sm cursor-pointer self-start;
+  }
+  
+  .discover-filter-toggle:hover {
+      @apply border-primary/50;
+  }
+  
+  /* --- Sidebar: collapsible drawer on all screen sizes --- */
+  .discover-filter-backdrop {
+      @apply fixed inset-0 bg-black/60 z-40;
+      backdrop-filter: blur(2px);
   }
   
   .discover-sidebar {
-    @apply flex flex-col gap-5 lg:w-[280px] lg:flex-shrink-0;
+      @apply fixed top-0 left-0 h-full w-[300px] z-50 flex flex-col gap-5 px-5 py-6 overflow-y-auto;
+      background: rgba(13, 22, 26, 0.97);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+  }
+  
+  .discover-sidebar-open {
+      transform: translateX(0);
+  }
+  
+  .discover-sidebar-header {
+      @apply flex items-center justify-between pb-2 border-b border-dark-200;
+  }
+  
+  .discover-sidebar-title {
+      @apply text-light-100 font-semibold text-base;
+  }
+  
+  .discover-sidebar-close {
+      @apply text-light-200 hover:text-light-100 cursor-pointer p-1;
   }
   
   .discover-results {
-    @apply flex-1 flex flex-col gap-6;
+      @apply flex-1 flex flex-col gap-6 min-w-0 w-full;
   }
   
   .discover-results-count {
-    @apply text-light-200 text-sm;
+      @apply text-light-200 text-sm;
   }
   
-  .discover-tag-filter {
-    @apply flex flex-col gap-4 max-h-[360px] overflow-y-auto;
+  /* --- Date range filter --- */
+  .discover-date-filter {
+      @apply flex flex-col gap-2;
   }
   
-  .discover-tag-group-title {
-    @apply text-light-200 text-xs font-semibold uppercase tracking-wide mb-1.5;
+  .discover-date-row {
+      @apply flex items-center gap-2 bg-dark-200/40 rounded-lg px-3 py-2;
   }
   
-  .discover-tag-checkbox {
-    @apply flex items-center gap-2 text-sm text-light-100 py-1 cursor-pointer;
+  .discover-date-row input[type="date"] {
+      @apply bg-transparent text-light-100 text-sm outline-none min-w-0 flex-1;
+      color-scheme: dark;
   }
   
+  .discover-date-separator {
+      @apply text-light-200 text-xs flex-shrink-0;
+  }
+  
+  .discover-date-clear {
+      @apply text-primary text-xs self-start cursor-pointer;
+  }
+  
+  /* --- Mode filter --- */
   .discover-mode-filter {
-    @apply flex flex-row flex-wrap gap-2;
+      @apply flex flex-row flex-wrap gap-2;
   }
   
   .discover-mode-pill {
-    @apply bg-dark-200 text-light-200 rounded-full px-3 py-1 text-xs cursor-pointer;
+      @apply bg-dark-200/60 text-light-200 rounded-full px-3 py-1.5 text-xs cursor-pointer flex items-center gap-1.5 transition-colors;
   }
   
   .discover-mode-pill.active {
-    @apply bg-primary text-black font-medium;
+      @apply bg-primary text-black font-medium;
   }
   
+  /* Forces white in the inactive (dark pill) state, regardless of the source SVG's own color */
+  .discover-mode-icon {
+      @apply flex items-center;
+      filter: brightness(0) invert(1);
+  }
+  
+  /* Forces black in the active (bright teal pill) state, for contrast */
+  .discover-mode-icon-active {
+      filter: brightness(0);
+  }
+
+  /* --- Filter Toggle Button --- */
+  .discover-filter-toggle {
+      @apply flex items-center gap-2 bg-dark-200/60 hover:bg-dark-200 text-light-200 
+             rounded-full px-4 py-2 text-sm font-medium transition-colors;
+  }
+
+  .discover-filter-icon {
+      @apply flex items-center;
+      filter: brightness(0) invert(1);           /* Makes icon white (same as mode filter) */
+  }
+
+  /* Optional: Change color when button is active (if you add active state later) */
+  .discover-filter-toggle.active .discover-filter-icon {
+      filter: brightness(0);                     /* Makes icon black */
+  }
+  
+  /* --- Tags Filter --- */
+  .discover-tag-filter {
+      max-height: 420px;           /* Adjust as needed */
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 8px;          /* Space for scrollbar */
+  }
+
+  /* Hide scrollbar - clean look */
+  .discover-tag-filter::-webkit-scrollbar {
+      display: none;               /* Chrome, Safari, Edge */
+  }
+
+  .discover-tag-filter {
+      -ms-overflow-style: none;    /* IE and Edge */
+      scrollbar-width: none;       /* Firefox */
+  }
+
+  /* Optional: Better spacing for tags */
+  .discover-tag-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+  }
+
+  .discover-tag-checkbox {
+      @apply flex items-center gap-2 py-1 px-2 rounded hover:bg-dark-200/50 cursor-pointer text-sm;
+  }
+
+  .discover-tag-group-title {
+      @apply text-xs uppercase tracking-widest text-light-200 mt-4 mb-2 font-medium;
+  }
+  
+  /* --- Pagination --- */
   .discover-pagination {
-    @apply flex items-center justify-center gap-6 text-sm text-light-200 mt-4;
+      @apply flex items-center justify-center gap-6 text-sm text-light-200 mt-4;
   }
   
-  .discover-pagination a {
-    @apply text-primary hover:underline;
+  .discover-pagination-link {
+      @apply text-primary hover:underline flex items-center gap-1;
   }
   
 

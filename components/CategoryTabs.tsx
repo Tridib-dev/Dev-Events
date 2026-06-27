@@ -3,35 +3,56 @@
 import Link from "next/link";
 import { EVENT_CATEGORIES } from "@/lib/constants/event-categories";
 
-const slugify = (value: string): string => value.toLowerCase().replace(/\s+/g, "-");
+const slugify = (value: string): string => 
+    value.toLowerCase().replace(/\s+/g, "-");
 
 interface CategoryTabsProps {
-    activeCategory?: string;
-    searchParams: Record<string, string | undefined>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-const CategoryTabs = ({ activeCategory, searchParams }: CategoryTabsProps) => {
-    const buildHref = (categorySlug?: string) => {
-        const params = new URLSearchParams();
-        Object.entries(searchParams).forEach(([key, value]) => {
-            if (value) params.set(key, value);
-        });
-        if (categorySlug) {
-            params.set("category", categorySlug);
-        } else {
-            params.delete("category");
-        }
-        params.delete("page");
+const CategoryTabs = async ({ searchParams }: CategoryTabsProps) => {
+    const params = await searchParams;
+    
+    const activeCategory = typeof params.category === 'string' 
+        ? params.category 
+        : undefined;
 
-        const query = params.toString();
+    const buildHref = (categorySlug?: string) => {
+        const urlParams = new URLSearchParams();
+        
+        // Preserve all existing search params
+        Object.entries(params).forEach(([key, value]) => {
+            if (value) {
+                if (Array.isArray(value)) {
+                    value.forEach(v => urlParams.append(key, v));
+                } else {
+                    urlParams.set(key, value);
+                }
+            }
+        });
+
+        if (categorySlug) {
+            urlParams.set("category", categorySlug);
+        } else {
+            urlParams.delete("category");
+        }
+        
+        // Always reset page when changing category
+        urlParams.delete("page");
+
+        const query = urlParams.toString();
         return `/events/discover${query ? `?${query}` : ""}`;
     };
 
     return (
         <div className="category-tabs">
-            <Link href={buildHref(undefined)} className={`category-tab ${!activeCategory ? "active" : ""}`}>
+            <Link 
+                href={buildHref(undefined)} 
+                className={`category-tab ${!activeCategory ? "active" : ""}`}
+            >
                 All
             </Link>
+            
             {EVENT_CATEGORIES.map((category) => {
                 const slug = slugify(category);
                 return (

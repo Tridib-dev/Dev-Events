@@ -41,20 +41,22 @@ const DiscoverTagFilter = () => {
             {groupedTags.map(([category, tags]) => (
                 <div key={category} className="discover-tag-group">
                     <p className="discover-tag-group-title">{category}</p>
-                    {tags.map((tag) => {
-                        const slug = slugify(tag);
-                        const checked = selectedTags.includes(slug);
-                        return (
-                            <label key={tag} className="discover-tag-checkbox">
-                                <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => toggleTag(slug)}
-                                />
-                                {tag}
-                            </label>
-                        );
-                    })}
+                    <div className="discover-tag-list">
+                        {tags.map((tag) => {
+                            const slug = slugify(tag);
+                            const checked = selectedTags.includes(slug);
+                            return (
+                                <label key={tag} className="discover-tag-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={() => toggleTag(slug)}
+                                    />
+                                    {tag}
+                                </label>
+                            );
+                        })}
+                    </div>
                 </div>
             ))}
         </div>

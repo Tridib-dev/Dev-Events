@@ -19,29 +19,47 @@ const DiscoverSearchBar = () => {
         const params = new URLSearchParams(searchParams.toString());
         q.trim() ? params.set("q", q.trim()) : params.delete("q");
         location.trim() ? params.set("location", location.trim()) : params.delete("location");
-        params.delete("page"); // a new search always resets pagination
+        params.delete("page");
 
         router.push(`/events/discover?${params.toString()}`);
     };
 
     return (
-        <form onSubmit={handleSubmit} className="discover-search-bar">
-            <input
-                type="text"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search events, tags, topics..."
-                aria-label="Search events"
-            />
-            <span className="discover-search-divider" />
-            <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, state, or country"
-                aria-label="Location"
-            />
-            <button type="submit" aria-label="Search">
+        <form onSubmit={handleSubmit} className="discover-search-row">
+            <div className="discover-search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="discover-search-icon">
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                    <path d="M21 21L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <input
+                    type="text"
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search events, tags, topics..."
+                    aria-label="Search events"
+                />
+            </div>
+
+            <div className="discover-search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="discover-search-icon">
+                    <path
+                        d="M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinejoin="round"
+                    />
+                    <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="2" />
+                </svg>
+                <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="City, state, or country"
+                    aria-label="Location"
+                />
+            </div>
+
+            <button type="submit" className="discover-search-button">
                 Search
             </button>
         </form>
