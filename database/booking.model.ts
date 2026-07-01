@@ -9,7 +9,7 @@ export interface IBooking {
   email: string;
   createdAt: Date;
   updatedAt: Date;
-  slug? : string;
+  slug?: string;
 }
 
 type BookingDocument = HydratedDocument<IBooking>;
@@ -31,12 +31,13 @@ const bookingSchema = new Schema<IBooking>(
         validator: (value: string) => EMAIL_REGEX.test(value),
         message: "Invalid email format.",
       },
-      slug : {
-        type : String,
-        required : true,
-        trim : true,
-        lowercase : true,
-      }
+    },
+    // ✅ Fixed — slug is now a real top-level field, not nested inside email's options
+    slug: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
     },
   },
   {
@@ -44,7 +45,7 @@ const bookingSchema = new Schema<IBooking>(
   }
 );
 
- bookingSchema.index({ eventId: 1, email: 1 }, { unique: true });
+bookingSchema.index({ eventId: 1, email: 1 }, { unique: true });
 
 bookingSchema.pre("save", async function validateBooking(this: BookingDocument) {
   this.email = this.email.trim().toLowerCase();

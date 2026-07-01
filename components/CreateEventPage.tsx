@@ -8,6 +8,8 @@ import OrganizerEmails from "./Organizeremails";
 import TagPicker from "./Tagpicker";
 import AgendaFields, { AgendaItemInput } from "./Agendafields";
 import LocationFields, { LocationValue } from "./Locationfields";
+import FreePaidToggle from "./FreePaidToggle";
+
 
 const CreateEventPage = () => {
     const router = useRouter();
@@ -277,7 +279,9 @@ const CreateEventPage = () => {
                             required
                         />
                     </div>
-
+                    <div className='field'>
+                        <FreePaidToggle onChange={(price) => console.log("Price updated:", price)} />
+                    </div>
                     <div className="field">
                         <label>Tags</label>
                         <TagPicker onChange={setTags} />

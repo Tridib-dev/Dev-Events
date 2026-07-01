@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateEmails } from "@/lib/validateemail";
 import { slugifySegment } from "@/lib/seo-events";
 
-
 type AgendaItem = {
     startTime: string;
     endTime: string;
@@ -29,7 +28,7 @@ const isDuplicateKeyError = (error: unknown): boolean =>
     "code" in error &&
     (error as { code?: number }).code === 11000;
 
-// export const runtime = "nodejs";
+
 
 export async function POST(req: NextRequest) {
     try {
@@ -52,11 +51,28 @@ export async function POST(req: NextRequest) {
             return Response.json({ error: emailCheck.reason }, { status: 400 });
         }
 
+        // ==================== IMAGE VALIDATION ====================
         const fileEntry = formData.get("image");
         if (!(fileEntry instanceof File) || fileEntry.size === 0) {
             return NextResponse.json({ message: 'Image File is required' }, { status: 400 });
         }
+
         const file = fileEntry;
+
+        const MAX_FILE_SIZE = 3 * 1024 * 1024; // 5MB
+        if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json({
+                message: 'Image size must be less than 3MB. Please upload a smaller image.'
+            }, { status: 400 });
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            return NextResponse.json({
+                message: 'Only JPG, PNG, and WebP images are allowed.'
+            }, { status: 400 });
+        }
+        // ========================================================
 
         const tags = formData.getAll('tags') as string[];
 
@@ -75,14 +91,21 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "An event with this slug already exists" }, { status: 409 });
         }
 
+        // Upload Image
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
+        const cleanFileName = `${Date.now()}-${slugifySegment(title)}.${file.name.split('.').pop() || 'jpg'}`;
 
-        const uploadResult = (await imagekit.upload({
+        const uploadResult = await imagekit.upload({
             file: buffer,
-            fileName: `${Date.now()}-${file.name}`,
+            fileName: cleanFileName,
             folder: "/DevEvent",
-        })) as ImageKitUploadResult;
+            useUniqueFileName: true,
+        }) as ImageKitUploadResult;
+
+        if (!uploadResult?.url) {
+            return NextResponse.json({ message: 'Image upload failed. Please try again.' }, { status: 500 });
+        }
 
         const imageFileId = uploadResult.fileId || uploadResult.file_id || uploadResult.fileID;
 
@@ -104,19 +127,26 @@ export async function POST(req: NextRequest) {
                 time: String(eventFields.time ?? ""),
                 mode: String(eventFields.mode ?? ""),
                 audience: String(eventFields.audience ?? ""),
+                price: Number(eventFields.price ?? 0),
+                sponsors: JSON.parse(formData.get('sponsors') as string || '[]'),
                 organizer: String(eventFields.organizer ?? ""),
                 tags,
                 agenda,
                 organizerEmails, 
             });
-            revalidateTag("events", "max");
-            return NextResponse.json({ message: 'Event Created Successfully', event: create_event }, { status: 201 });
+
+            revalidateTag("events", "default");
+            return NextResponse.json({ 
+                message: 'Event Created Successfully', 
+                event: create_event 
+            }, { status: 201 });
+
         } catch (createErr: unknown) {
             if (imageFileId) {
                 try {
                     await imagekit.deleteFile(imageFileId);
-                } catch (deleteErr: unknown) {
-                    console.error('ImageKit cleanup failed for fileId', imageFileId, deleteErr);
+                } catch (deleteErr) {
+                    console.error('ImageKit cleanup failed:', deleteErr);
                 }
             }
 
@@ -125,13 +155,10 @@ export async function POST(req: NextRequest) {
             }
 
             console.error('Event creation failed:', createErr);
-            return NextResponse.json(
-                {
-                    message: 'Event Creation failed',
-                    error: createErr instanceof Error ? createErr.message : 'Unknown',
-                },
-                { status: 500 }
-            );
+            return NextResponse.json({
+                message: 'Event Creation failed',
+                error: createErr instanceof Error ? createErr.message : 'Unknown error',
+            }, { status: 500 });
         }
 
     } catch (err: unknown) {
@@ -139,19 +166,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "An event with this slug already exists" }, { status: 409 });
         }
         console.error(err);
-        return NextResponse.json({ message: 'Event Creation failed', error: err instanceof Error ? err.message : 'Unknown' }, { status: 500 });
+        return NextResponse.json({ 
+            message: 'Event Creation failed', 
+            error: err instanceof Error ? err.message : 'Unknown error' 
+        }, { status: 500 });
     }
 }
 
 export async function GET() {
-    try{
+    try {
         await connectToDatabase();
-
-        const events = await Event.find().sort({createdAt : -1});
-
-        return NextResponse.json({message : 'Event Fetched Successfully' , events},{status : 200});
-    }catch(err){
-      console.error('Event fetching failed:', err);
-      return NextResponse.json({message : 'Event Fetching Failed',error : err},{status:500});
+        const events = await Event.find().sort({ createdAt: -1 });
+        return NextResponse.json({ message: 'Event Fetched Successfully', events }, { status: 200 });
+    } catch (err) {
+        console.error('Event fetching failed:', err);
+        return NextResponse.json({ message: 'Event Fetching Failed', error: err }, { status: 500 });
     }
 }

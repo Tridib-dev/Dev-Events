@@ -55,6 +55,8 @@ const toEventPayload = (eventDocument: HydratedDocument<IEvent>): EventPayload =
   stateSlug: eventDocument.stateSlug,
   citySlug: eventDocument.citySlug,
   categorySlug: eventDocument.categorySlug,
+  price: eventDocument.price,           // ← Add this
+  sponsors: eventDocument.sponsors || [], // ← Add this
   createdAt: eventDocument.createdAt,
   updatedAt: eventDocument.updatedAt,
 });

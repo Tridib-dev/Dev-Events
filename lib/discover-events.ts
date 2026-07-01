@@ -14,6 +14,7 @@ import { getModeLabelBySlug } from "./constants/event-mode";
 
 
 export interface DiscoverCard {
+    _id: any;                    // ← Added
     title: string;
     slug: string;
     location: string;
@@ -23,6 +24,8 @@ export interface DiscoverCard {
     tags: string[];
     mode: string;
     category: string;
+    price?: number;              // ← Added
+    organizer?: string;          // ← Added
 }
 
 export interface DiscoverFilters {
@@ -61,8 +64,9 @@ type DiscoverAggregateResult = {
     totalCount?: { total?: number }[];
 };
 
-const normalizeDiscoverCards = (events: DiscoverCardDocument[]): DiscoverCard[] =>
+const normalizeDiscoverCards = (events: any[]): DiscoverCard[] =>
     events.map((event) => ({
+        _id: event._id,
         title: event.title ?? "",
         slug: event.slug ?? "",
         location: event.location ?? "",
@@ -72,6 +76,8 @@ const normalizeDiscoverCards = (events: DiscoverCardDocument[]): DiscoverCard[] 
         tags: Array.isArray(event.tags) ? event.tags : [],
         mode: event.mode ?? "",
         category: event.category ?? "",
+        price: event.price ?? 0,
+        organizer: event.organizer ?? "",
     }));
 
 const normalizeSearchValue = (value: string): string => value.trim().toLowerCase();

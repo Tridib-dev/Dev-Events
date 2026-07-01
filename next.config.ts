@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
         hostname: 'ik.imagekit.io',
         pathname: '/cf93muhpcx/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
     ],
   },
   async rewrites() {

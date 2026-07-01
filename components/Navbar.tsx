@@ -1,11 +1,11 @@
-// components/Navbar.tsx
-
 'use client';
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useUser, UserButton, SignInButton, SignUpButton } from "@clerk/nextjs";
+import FlowButtonV1 from './GetStartedBTN';
 
 interface NavLink {
     label: string;
@@ -18,12 +18,17 @@ const NAV_LINKS: NavLink[] = [
     { label: "Create Event", href: "/create_event" },
 ];
 
+const signInButtonClass =
+    "inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-white/20 hover:bg-white/10 hover:text-white";
+
 const Navbar = () => {
     const pathname = usePathname();
+    const { isSignedIn, isLoaded } = useUser();
+
     const [scrolled, setScrolled] = useState(false);
     const [indicator, setIndicator] = useState({ left: 0, width: 0, ready: false });
 
-    const containerRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLUListElement>(null);
     const linkRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
     const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -35,13 +40,30 @@ const Navbar = () => {
     const measureIndicator = () => {
         const activeEl = linkRefs.current.get(activeHref);
         const container = containerRef.current;
-        if (!activeEl || !container) {
-            setIndicator((prev) => ({ ...prev, ready: false }));
+
+        // Guard: if the desktop link list is hidden (display:none below
+        // the md breakpoint, or not mounted yet), bail out instead of
+        // measuring a stale/zero rect. offsetParent is null whenever the
+        // element (or an ancestor) is display:none.
+        if (!activeEl || !container || container.offsetParent === null) {
+            setIndicator((prev) => (prev.ready ? { ...prev, ready: false } : prev));
             return;
         }
+
+        const containerRect = container.getBoundingClientRect();
+        const activeRect = activeEl.getBoundingClientRect();
+
+        // A collapsed/zero-width container means layout hasn't settled
+        // (or we're mid-breakpoint-flip) — skip this frame rather than
+        // committing a bad value.
+        if (containerRect.width === 0 || activeRect.width === 0) {
+            setIndicator((prev) => (prev.ready ? { ...prev, ready: false } : prev));
+            return;
+        }
+
         setIndicator({
-            left: activeEl.offsetLeft,
-            width: activeEl.offsetWidth,
+            left: activeRect.left - containerRect.left,
+            width: activeRect.width,
             ready: true,
         });
     };
@@ -51,6 +73,26 @@ const Navbar = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeHref]);
 
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const observer = new ResizeObserver(() => {
+            measureIndicator();
+        });
+
+        observer.observe(container);
+        linkRefs.current.forEach((el) => observer.observe(el));
+
+        return () => observer.disconnect();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeHref]);
+
+    // Re-measure on viewport resize. This is the key fix for the mobile
+    // overlap: ResizeObserver watches the desktop <ul>'s own box, but
+    // that box sits at display:none below `md`, so crossing the
+    // breakpoint (rotating a phone, resizing a window) doesn't always
+    // trigger a fresh measurement from the observer alone.
     useEffect(() => {
         const handleResize = () => measureIndicator();
         window.addEventListener("resize", handleResize);
@@ -67,30 +109,60 @@ const Navbar = () => {
 
     return (
         <header className="navbar-wrapper">
-            <nav className={`navbar-floating ${scrolled ? "navbar-scrolled" : ""}`}>
-              <Link href="/" className="logo">
-                  <Image src="/icons/logo.png" alt="Logo" width={24} height={24}/>
-                  <p>DevEvent</p>
-              </Link>
-                <div className="navbar-links-desktop" ref={containerRef}>
+            <nav className={`navbar-floating ${scrolled ? "navbar-scrolled" : ""}`} aria-label="Primary">
+                <Link href="/" className="logo">
+                    <Image src="/icons/logo.png" alt="DevEvent" width={24} height={24} />
+                    <p>DevEvent</p>
+                </Link>
+
+                <ul className="navbar-links-desktop hidden md:flex relative" ref={containerRef}>
                     {indicator.ready && (
-                        <div
-                            className="navbar-pill-indicator"
+                        <span
+                            className="navbar-pill-indicator hidden md:block"
+                            aria-hidden="true"
                             style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width }}
                         />
                     )}
-                    {NAV_LINKS.map((link) => (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          ref={(el) => {
-                            if (el) linkRefs.current.set(link.href, el);
-                          }}
-                            className={`navbar-link ${activeHref === link.href ? "navbar-link-active" : ""}`}
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
+                    {NAV_LINKS.map((link) => {
+                        const isActive = activeHref === link.href;
+                        return (
+                            <li key={link.href}>
+                                <Link
+                                    href={link.href}
+                                    ref={(el) => {
+                                        if (el) linkRefs.current.set(link.href, el);
+                                    }}
+                                    aria-current={isActive ? "page" : undefined}
+                                    className={`navbar-link ${isActive ? "navbar-link-active" : ""}`}
+                                >
+                                    {link.label}
+                                </Link>
+                            </li>
+                        );
+                    })}
+                </ul>
+
+                <div className="hidden items-center gap-3 md:flex">
+                    {isLoaded && (
+                        <>
+                            {!isSignedIn ? (
+                                <div className="flex items-center gap-2">
+                                    <SignInButton mode="redirect" fallbackRedirectUrl="/">
+                                        <button type="button" className={signInButtonClass}>
+                                            Sign in
+                                        </button>
+                                    </SignInButton>
+                                    <SignUpButton mode="redirect" fallbackRedirectUrl="/">
+                                        <FlowButtonV1 />
+                                    </SignUpButton>
+                                </div>
+                            ) : (
+                                <div className="flex items-center rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur-sm">
+                                    <UserButton />
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 <button
@@ -98,13 +170,14 @@ const Navbar = () => {
                     className="navbar-mobile-toggle"
                     onClick={() => setMobileOpen((prev) => !prev)}
                     aria-label="Toggle navigation menu"
+                    aria-expanded={mobileOpen}
                 >
                     {mobileOpen ? (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         </svg>
                     ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         </svg>
                     )}
@@ -113,25 +186,51 @@ const Navbar = () => {
 
             {mobileOpen && (
                 <>
-                    {/* Backdrop - Click anywhere to close */}
-                    <div
-                        className="fixed inset-0 bg-black/60 z-40 md:hidden"
-                        onClick={() => setMobileOpen(false)}
-                    />
+                    <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />
 
-                    {/* Mobile Menu */}
-                    <div className="navbar-mobile-menu z-50">
-                        {NAV_LINKS.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={() => setMobileOpen(false)}
-                                className={`navbar-mobile-link ${activeHref === link.href ? "navbar-mobile-link-active" : ""}`}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
-                    </div>
+                    <nav className="navbar-mobile-menu z-50" aria-label="Mobile">
+                        <ul>
+                            {NAV_LINKS.map((link) => {
+                                const isActive = activeHref === link.href;
+                                return (
+                                    <li key={link.href}>
+                                        <Link
+                                            href={link.href}
+                                            onClick={() => setMobileOpen(false)}
+                                            aria-current={isActive ? "page" : undefined}
+                                            className={`navbar-mobile-link ${isActive ? "navbar-mobile-link-active" : ""}`}
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+
+                        <div className="mt-3 border-t border-white/10 pt-3">
+                            {isLoaded && (
+                                <>
+                                    {!isSignedIn ? (
+                                        <div className="grid gap-2">
+                                            <SignInButton mode="redirect" fallbackRedirectUrl="/">
+                                                <button type="button" className={signInButtonClass}>
+                                                    Sign in
+                                                </button>
+                                            </SignInButton>
+                                            <SignUpButton mode="redirect" fallbackRedirectUrl="/">
+                                                <FlowButtonV1 />
+                                            </SignUpButton>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-3 py-3">
+                                            <UserButton />
+                                            <div className="text-sm text-white/80">Account</div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </nav>
                 </>
             )}
         </header>

@@ -26,7 +26,20 @@ const SeoEventListing = ({
         <ul className="events">
           {events.map((event) => (
             <li key={event.slug}>
-              <EventCard {...event} />
+              <EventCard
+                eventId={event._id.toString()}
+                title={event.title}
+                image={event.image}
+                slug={event.slug}
+                location={event.location}
+                date={event.date}
+                time={event.time}
+                mode={event.mode}
+                price={event.price ?? 0}
+                tags={event.tags}
+                hostName={event.organizer || "Unknown"}
+                organization="DevSphere Community"
+              />
             </li>
           ))}
         </ul>

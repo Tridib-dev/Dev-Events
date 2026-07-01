@@ -888,10 +888,22 @@
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
       background-size: 90px 90px;
   }
+  @keyframes navcta-aurora-spin {
+    to { transform: rotate(360deg); }
+  }
 
   /* Links */
   .navbar-link {
       @apply relative z-10 px-5 py-1.5 text-sm text-light-200 rounded-full transition-all;
+  }
+  .navbar-links-desktop {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .navbar-links-desktop li {
+    display: contents; /* li shouldn't add its own box — link keeps the existing layout */
   }
 
   .navbar-link-active {
@@ -940,22 +952,377 @@
 
   /* Mobile links */
   .navbar-mobile-link {
-    @apply text-light-200 text-[15px] px-5 py-3.5 rounded-xl transition-all active:scale-[0.97];
+    @apply block w-full text-light-200 text-[15px] px-5 py-3.5 rounded-xl transition-all active:scale-[0.97];
   }
 
   .navbar-mobile-link-active {
     @apply bg-white/10 text-white font-medium;
   }
 
+  .navbar-mobile-menu ul {
+    @apply list-none m-0 p-0;
+  }
+
+  .navbar-mobile-menu li {
+    @apply list-none;
+  }
+
+
+  @keyframes flowBtnPulse {
+    0%, 100% {
+      box-shadow:
+        0 0 0 0 rgba(255, 255, 255, 0.25),
+        0 0 12px 0 rgba(255, 255, 255, 0.15);
+    }
+    50% {
+      box-shadow:
+        0 0 0 6px rgba(255, 255, 255, 0),
+        0 0 24px 4px rgba(255, 255, 255, 0.35);
+    }
+  }
+  
+  .flow-btn-glow {
+    animation: flowBtnPulse 2.4s ease-in-out infinite;
+  }
+  
+  .flow-btn-glow:hover {
+    animation: none;
+    box-shadow: none;
+  }
+
   main {
     @apply pt-24;
     min-height: 100vh;
   }
+
+  .site-footer {
+      @apply relative mt-24 border-t border-dark-200;
+      background: rgba(8, 12, 16, 0.95);
+  }
+  
+  .footer-inner {
+      @apply mx-auto max-w-7xl px-6 py-16 flex flex-col gap-14;
+  }
+  
+  /* === CTA Banner === */
+  .footer-cta {
+      @apply relative flex items-center justify-between overflow-hidden rounded-2xl border border-dark-200 px-10 py-12;
+      background: linear-gradient(135deg, rgba(13, 22, 26, 0.95) 0%, rgba(6, 182, 212, 0.06) 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  
+  .footer-cta-content {
+      @apply flex flex-col gap-4 z-10 max-w-sm;
+  }
+  
+  .footer-cta-heading {
+      @apply text-3xl font-bold leading-tight text-white;
+      font-family: var(--font-schibsted-grotesk);
+  }
+  
+  .footer-cta-subtext {
+      @apply text-light-200 text-sm leading-relaxed;
+  }
+  
+  .footer-cta-btn {
+      @apply inline-flex items-center gap-2 self-start rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-primary/90;
+  }
+  
+  .footer-cta-map {
+      @apply absolute right-0 top-0 h-full w-1/2 flex items-center justify-end overflow-hidden opacity-60;
+  }
+  
+  .footer-cta-map-img {
+      @apply h-full w-full object-cover object-center;
+  }
+  
+  /* === Main content: brand + links === */
+  .footer-main {
+      @apply flex flex-col gap-12 lg:flex-row;
+  }
+  
+  /* === Brand column === */
+  .footer-brand {
+      @apply flex flex-col gap-5 lg:w-64 lg:flex-shrink-0;
+  }
+  
+  .footer-logo {
+      @apply flex items-center gap-2.5;
+      font-size: 1.125rem;
+      font-weight: 700;
+      font-style: italic;
+      color: #f1f5f9;
+  }
+  
+  .footer-tagline {
+      @apply text-sm text-light-200 leading-relaxed;
+  }
+  
+  .footer-socials {
+      @apply flex items-center gap-3;
+  }
+  
+  .footer-social-link {
+      @apply text-light-200 transition-colors hover:text-primary;
+  }
+  
+  /* === Links grid === */
+  .footer-links-grid {
+      @apply grid flex-1 gap-8;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+  
+  .footer-links-column {
+      @apply flex flex-col gap-3;
+  }
+  
+  .footer-links-heading {
+      @apply text-xs font-semibold uppercase tracking-widest text-primary;
+  }
+  
+  .footer-links-column ul {
+      @apply flex flex-col gap-2 list-none p-0 m-0;
+  }
+  
+  .footer-link {
+      @apply text-sm text-light-200 transition-colors hover:text-light-100;
+  }
+  
+  .footer-link-soon {
+      @apply text-sm opacity-40 cursor-default;
+  }
+  
+  /* === Divider + Bottom bar === */
+  .footer-divider {
+      @apply border-t border-dark-200;
+  }
+  
+  .footer-bottom {
+      @apply flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-light-200;
+  }
+  
+  .footer-copyright {
+      @apply text-xs;
+  }
+  
+  .footer-made-with {
+      @apply flex items-center gap-1.5 text-xs;
+  }
+  
+  /* === Responsive === */
+  @media (max-width: 768px) {
+      .footer-cta {
+          @apply flex-col gap-6 px-6 py-8;
+      }
+    
+      .footer-cta-map {
+          @apply relative w-full h-40 opacity-30;
+      }
+  }
+  
  
   .events {
     @apply grid md:grid-cols-3 gap-10 sm:grid-cols-2 grid-cols-1;
   }
 
+  .title {
+    font-family: inherit;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .icon-white {
+    filter: brightness(0) invert(1);
+  }
+  
+  .icon-white img {
+    display: block;
+  }
+  .event-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+  .glass-radio-group {
+    --bg: rgba(255, 255, 255, 0.06);
+    display: flex;
+    background: var(--bg);
+    border-radius: 1rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 
+      inset 1px 1px 4px rgba(255, 255, 255, 0.2),
+      inset -1px -1px 6px rgba(0, 0, 0, 0.3),
+      0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    width: fit-content;
+  }
+  
+  .glass-radio-group input {
+    display: none;
+  }
+  
+  .glass-radio-group label {
+    padding: 0.9rem 2rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: #e5e5e5;
+    position: relative;
+    z-index: 2;
+    transition: color 0.3s ease;
+  }
+  
+  .glass-radio-group input:checked + label {
+    color: white;
+  }
+  
+  .glass-glider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    border-radius: 1rem;
+    z-index: 1;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #22d3ee, #3b82f6);
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+  }
+  
+  #free:checked ~ .glass-glider {
+    transform: translateX(0%);
+  }
+  
+  #paid:checked ~ .glass-glider {
+    transform: translateX(100%);
+  }
+
+  
+  
+  /* Override base .footer-cta to ensure position:relative and correct stacking */
+  .footer-cta {
+      position: relative;
+      overflow: hidden;
+  
+      /* Glowing border that looks like light catching the card edge */
+      border: 1px solid rgba(6, 182, 212, 0.25) !important;
+  
+      /* Layered box-shadows:
+         1. Inner top highlight — scratchy light rim at the top edge
+         2. Inner left highlight — rim on the left edge
+         3. Outer cyan glow — the card radiating outward  */
+      box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.12),
+          inset 1px 0 0 rgba(255, 255, 255, 0.06),
+          inset 0 -1px 0 rgba(6, 182, 212, 0.08),
+          0 0 40px -8px rgba(6, 182, 212, 0.2),
+          0 0 80px -20px rgba(6, 182, 212, 0.15);
+  }
+  
+  /* Grain texture layer — sits above the background, below content */
+  .footer-cta-grain {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 1;
+  
+      /* SVG feTurbulence noise baked as a data URI — no external file needed */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 180px 180px;
+      background-repeat: repeat;
+  
+      /* Blend mode makes grain feel burned-in, not painted on */
+      mix-blend-mode: overlay;
+      opacity: 0.06;
+  }
+  
+  /* Edge rim lighting — a conic gradient that simulates light
+     catching the top-left corner of the card and fading away,
+     creating that "scratchy lit edge" look */
+  .footer-cta-rim {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 1;
+  
+      background: conic-gradient(
+          from 220deg at 0% 0%,
+          rgba(103, 232, 249, 0.18) 0deg,
+          rgba(6, 182, 212, 0.10) 40deg,
+          transparent 90deg,
+          transparent 360deg
+      );
+  
+      /* Mask to only affect the very edges — not the center of the card */
+      -webkit-mask-image: radial-gradient(
+          ellipse 85% 85% at 50% 50%,
+          transparent 55%,
+          black 100%
+      );
+      mask-image: radial-gradient(
+          ellipse 85% 85% at 50% 50%,
+          transparent 55%,
+          black 100%
+      );
+  }
+  
+  /* Ensure content sits above both grain and rim layers */
+  .footer-cta-content {
+      position: relative;
+      z-index: 10;
+  }
+  
+  .footer-cta-map {
+      position: relative;
+      z-index: 10;
+  }
+  
+  /* ============================================================
+     Footer background — grainy cyan wash
+     ============================================================ */
+  .site-footer {
+      position: relative;
+      isolation: isolate;
+  }
+  
+  /* Bottom-left cyan gradient glow */
+  .site-footer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+          radial-gradient(
+              ellipse 60% 50% at 0% 100%,
+              rgba(6, 182, 212, 0.07) 0%,
+              transparent 70%
+          ),
+          radial-gradient(
+              ellipse 40% 40% at 100% 100%,
+              rgba(6, 182, 212, 0.04) 0%,
+              transparent 60%
+          );
+  }
+  
+  /* Grain texture over the whole footer */
+  .site-footer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      mix-blend-mode: overlay;
+      opacity: 0.04;
+  }
+  
+  /* Footer inner content needs to sit above the pseudo-element layers */
+  .footer-inner {
+      position: relative;
+      z-index: 1;
+  }
+  
   #event-card {
     @apply flex flex-col gap-3;
 

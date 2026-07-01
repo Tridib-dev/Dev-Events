@@ -8,6 +8,7 @@ export interface IAgendaItem {
 }
 
 export interface IEvent {
+  _id?: string;
   title: string;
   slug: string;
   description: string;
@@ -36,6 +37,13 @@ export interface IEvent {
   stateSlug?: string;
   citySlug?: string;
   categorySlug?: string;
+  price : number;
+  isFree ?: boolean;
+  sponsors: Array<{
+    name: string;
+    logo?: string;
+    website?: string;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -146,16 +154,11 @@ const eventSchema = new Schema<IEvent>(
     venue: { type: String, required: true, trim: true },
     location: { type: String, required: true, trim: true },
 
-    // --- New: structured location, populated via map picker (Phase 2) ---
     address: { type: String, required: true, trim: true },
     city: { type: String, required: true, trim: true },
     state: { type: String, required: true, trim: true },
     country: { type: String, required: true, trim: true },
-    // lat: { type: Number, required: true },
-    // lng: { type: Number, required: true },
-    // placeId: { type: String, required: false, trim: true },
 
-    // --- New: event format/category ---
     category: { type: String, required: true, enum: EVENT_CATEGORIES },
 
     date: { type: String, required: true, trim: true },
@@ -163,7 +166,20 @@ const eventSchema = new Schema<IEvent>(
     mode: { type: String, required: true, trim: true },
     audience: { type: String, required: true, trim: true },
 
-    // --- Changed: agenda is now an array of structured objects ---
+    price: { 
+      type: Number, 
+      required: true, 
+      min: 0, 
+      default: 0 
+    },
+
+    // Sponsors
+    sponsors: [{
+      name: { type: String, required: true },
+      logo: { type: String },
+      website: { type: String },
+    }],
+    // --- Agenda ---
     agenda: {
       type: [agendaItemSchema],
       required: true,
@@ -175,7 +191,6 @@ const eventSchema = new Schema<IEvent>(
 
     organizer: { type: String, required: true, trim: true },
 
-    // --- Changed: organizerEmail (single) -> organizerEmails (array) ---
     organizerEmails: {
       type: [{ type: String, trim: true, lowercase: true }],
       required: true,
