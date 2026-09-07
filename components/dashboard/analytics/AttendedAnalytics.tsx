@@ -7,6 +7,7 @@ import MetricCard from "./MetricCard";
 import { ActivityHeatmap, CategoryRadar } from "./Charts";
 import { MonthlyOverviewSection } from "./MonthlyOverviewSection";
 import type { AttendedAnalyticsData } from "@/lib/actions/overall-analytics";
+import { getEventDisplayTime } from "@/lib/time";
 
 function MoneyLine({
     label,
@@ -25,10 +26,12 @@ function MoneyLine({
 
 export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsData }) {
     const nextDate = data.nextEvent
-        ? new Date(data.nextEvent.date).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-          })
+        ? getEventDisplayTime({
+              date: data.nextEvent.date,
+              time: data.nextEvent.time ?? "00:00",
+              timezone: data.nextEvent.timezone,
+              startAtUTC: data.nextEvent.startAtUTC,
+          }).primary
         : null;
 
     return (

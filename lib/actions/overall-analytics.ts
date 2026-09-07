@@ -10,6 +10,7 @@ import { paiseToRupees } from "@/lib/payments/money";
 import { Event } from "@/database/event.model";
 import { CoOrganizer } from "@/database/coOrganizer.model";
 import { User } from "@/database/User.model";
+import { getEventStartUTC } from "@/lib/time";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,7 +19,7 @@ export interface AttendedAnalyticsData {
     thisYear: number;
     thisMonth: number;
     upcomingCount: number;
-    nextEvent: { title: string; date: string; slug: string } | null;
+    nextEvent: { title: string; date: string; slug: string; time?: string; timezone?: string; startAtUTC?: string } | null;
     nextEventCountdown: string | null;
     totalSpent: number;
     avgTicketPrice: number;
@@ -112,6 +113,16 @@ function humanCountdown(date: Date) {
     return `in ${days}d`;
 }
 
+function getEventInstant(event: { date: string; time?: string; timezone?: string; startAtUTC?: string | Date }): Date {
+    if (event.startAtUTC) return new Date(event.startAtUTC);
+    try {
+        if (event.time) return getEventStartUTC(event.date, event.time, event.timezone);
+    } catch {
+        // fall through to legacy behavior rather than crash the whole dashboard
+    }
+    return new Date(event.date);
+}
+
 function displayMode(mode: string) {
     const normalized = String(mode || "other").trim().toLowerCase();
     if (normalized === "online") return "Online";
@@ -169,10 +180,10 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
         const thisMonth = allEvents.filter((e) => new Date(e.bookedAt) >= monthStart).length;
 
         // Upcoming
-        const upcoming = allEvents.filter((e) => new Date(e.event.date) > now);
+        const upcoming = allEvents.filter((e) => getEventInstant(e.event) > now);
         const upcomingCount = upcoming.length;
         const nextEvent = upcoming.sort(
-            (a, b) => new Date(a.event.date).getTime() - new Date(b.event.date).getTime()
+            (a, b) => getEventInstant(a.event).getTime() - getEventInstant(b.event).getTime()
         )[0]?.event ?? null;
 
         // Money
@@ -239,9 +250,16 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
         return {
             lifetime, thisYear, thisMonth, upcomingCount,
             nextEvent: nextEvent
-                ? { title: nextEvent.title, date: nextEvent.date, slug: nextEvent.slug }
+                ? {
+                    title: nextEvent.title,
+                    date: nextEvent.date,
+                    slug: nextEvent.slug,
+                    time: nextEvent.time,
+                    timezone: nextEvent.timezone,
+                    startAtUTC: nextEvent.startAtUTC,
+                  }
                 : null,
-            nextEventCountdown: nextEvent ? humanCountdown(new Date(nextEvent.date)) : null,
+            nextEventCountdown: nextEvent ? humanCountdown(getEventInstant(nextEvent)) : null,
             totalSpent, avgTicketPrice,
             categoryBreakdown, favoriteOrganizers, monthlyActivity, modeBreakdown, streak,
         };
