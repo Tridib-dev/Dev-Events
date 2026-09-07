@@ -7,7 +7,9 @@ import { EventDraft } from "../types";
 
 const formatDate = (value: string) => {
   if (!value) return "Date TBD";
-  const d = new Date(value);
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+  const d = new Date(year, month - 1, day); // local calendar date, no UTC round-trip
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 };
