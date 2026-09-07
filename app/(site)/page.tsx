@@ -52,6 +52,8 @@ const Page = async () => {
                 tags={event.tags}
                 hostName={event.organizer || "Unknown"}
                 organization="DevSphere Community"
+                timezone={event.timezone ?? undefined}
+                startAtUTC={event.startAtUTC ?? undefined}
               />
             </li>
           ))}
@@ -63,6 +65,3 @@ const Page = async () => {
 
 export default Page;
 
-// TODO(timezone-migration): this EventCard falls back to Asia/Kolkata —
-              // homepage event list has not yet been threaded with timezone/startAtUTC.
-              // Tracked in TIMEZONE_AUDIT_STATE.md "Known gaps" section.

@@ -10,9 +10,10 @@ export const SEO_EVENTS_CACHE_TAG = "events";
 
 export type SeoEventCard = Pick<
   IEvent,
-  "title" | "slug" | "location" | "date" | "time" | "image"
+  "title" | "slug" | "location" | "date" | "time" | "image" | "mode" | "price" | "organizer" | "tags" | "timezone"
 > & {
   _id: string;
+  startAtUTC?: string; // IEvent types this as Date, but every response here is JSON-serialized first
 };
 
 type SeoEventDocument = SeoEventCard & {
@@ -29,7 +30,7 @@ type SeoEventDocument = SeoEventCard & {
 };
 
 const EVENT_CARD_SELECT =
-  "_id title slug location date time image tags country state city category tagSlugs countrySlug stateSlug citySlug categorySlug";
+  "_id title slug location date time image mode price organizer tags timezone startAtUTC country state city category tagSlugs countrySlug stateSlug citySlug categorySlug";
 
 export const slugifySegment = (value: string): string =>
   value
@@ -56,7 +57,13 @@ const normalizeCards = (events: SeoEventDocument[]): SeoEventCard[] =>
     date: event.date,
     time: event.time,
     image: event.image,
-  }));
+    mode: event.mode,
+    price: event.price,
+    organizer: event.organizer,
+    tags: event.tags ?? [],
+    timezone: event.timezone,
+    startAtUTC: event.startAtUTC ? String(event.startAtUTC) : undefined,
+}));
 
 async function getCachedEventDocuments(query: Record<string, unknown>): Promise<SeoEventDocument[]> {
   "use cache";
