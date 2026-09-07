@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowRight, Calendar, Clock, MapPin, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { normalizeEventMode } from "@/lib/constants/event-mode";
+import { getEventDisplayTime } from "@/lib/time";
 
 export type DashboardEventCardItem = {
     id: string;
@@ -15,6 +16,8 @@ export type DashboardEventCardItem = {
     location: string;
     date: string;
     time: string;
+    timezone?: string;
+    startAtUTC?: string | Date;
     organizer: string;
     organizerImage?: string;
     mode: string;
@@ -28,17 +31,16 @@ type Props = {
     compact?: boolean;
 };
 
-function formatDateWithYear(date: string) {
-    return new Date(date).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
-
 export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = false }: Props) {
     const mode = normalizeEventMode(event.mode);
     const modeLabel = mode === "online" ? "Online" : mode === "hybrid" ? "Hybrid" : "Offline";
+
+    const { primary: eventDateTime } = getEventDisplayTime({
+        date: event.date,
+        time: event.time,
+        timezone: event.timezone,
+        startAtUTC: event.startAtUTC,
+    });
 
     return (
         <motion.article
@@ -109,7 +111,7 @@ export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = fals
                             <div className="space-y-1.5 lg:text-right">
                                 <p className="flex items-center gap-1.5 lg:justify-end">
                                     <Calendar size={compact ? 11 : 12} className="shrink-0" />
-                                    <span>{formatDateWithYear(event.date)}</span>
+                                    <span>{eventDateTime}</span>
                                 </p>
                                 <p className="flex items-center gap-1.5 lg:justify-end">
                                     <Clock size={compact ? 11 : 12} className="shrink-0" />

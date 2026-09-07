@@ -25,41 +25,45 @@ export default async function DashboardPage() {
         clerkUser?.username ||
         "there";
 
-    const upcomingAttended: UpcomingEventCardItem[] = attendedEvents
-        .filter((event) => event.status === "upcoming")
-        .slice(0, 6)
-        .map((event) => ({
-            id: event.id,
-            title: event.eventTitle,
-            image: event.eventImage,
-            slug: event.eventSlug,
-            href: `/events/${event.eventSlug}`,
-            location: event.eventLocation,
-            date: event.eventDate,
-            time: event.eventTime,
-            organizer: event.eventOrganizer || "Organizer",
-            organizerImage: event.eventOrganizerImage,
-            mode: event.eventMode,
-            scope: "attended",
-        }));
+const upcomingAttended: UpcomingEventCardItem[] = attendedEvents
+         .filter((event) => event.status === "upcoming")
+         .slice(0, 6)
+         .map((event) => ({
+             id: event.id,
+             title: event.eventTitle,
+             image: event.eventImage,
+             slug: event.eventSlug,
+             href: `/events/${event.eventSlug}`,
+             location: event.eventLocation,
+             date: event.eventDate,
+             time: event.eventTime,
+             timezone: event.timezone,
+             startAtUTC: event.startAtUTC,
+             organizer: event.eventOrganizer || "Organizer",
+             organizerImage: event.eventOrganizerImage,
+             mode: event.eventMode,
+             scope: "attended",
+         }));
 
-    const upcomingOrganized: UpcomingEventCardItem[] = organizedEvents
-        .filter((event) => event.status === "upcoming")
-        .slice(0, 6)
-            .map((event) => ({
-            id: event.id,
-            title: event.title,
-            image: event.image,
-            slug: event.slug,
-            href: `/dashboard/events/${event.id}/overview`,
-            location: event.location,
-            date: event.date,
-            time: event.time,
-            organizer: displayName,
-            organizerImage: clerkUser?.imageUrl ?? "",
-            mode: event.mode,
-            scope: "organized",
-        }));
+const upcomingOrganized: UpcomingEventCardItem[] = organizedEvents
+         .filter((event) => event.status === "upcoming")
+         .slice(0, 6)
+             .map((event) => ({
+                 id: event.id,
+                 title: event.title,
+                 image: event.image,
+                 slug: event.slug,
+                 href: `/dashboard/events/${event.id}/overview`,
+                 location: event.location,
+                 date: event.date,
+                 time: event.time,
+                 timezone: event.timezone,
+                 startAtUTC: event.startAtUTC,
+                 organizer: displayName,
+                 organizerImage: clerkUser?.imageUrl ?? "",
+                 mode: event.mode,
+                 scope: "organized",
+             }));
 
     return (
         <DashboardHome

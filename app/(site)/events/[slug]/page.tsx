@@ -203,6 +203,7 @@ async function EventContent({ slug }: { slug: string }) {
               mode={event.mode}
               eventDate={date}
               eventTime={time}
+              timezone={event.timezone}
             />
         </>
     );

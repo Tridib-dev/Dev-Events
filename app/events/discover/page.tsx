@@ -119,7 +119,7 @@ async function DiscoverResults({ searchParams }: { searchParams: SearchParams })
 
     return <>
         <p className="discover-results-count">{total} event{total === 1 ? "" : "s"} found</p>
-        {events.length > 0 ? <div className="events">{events.map((event: DiscoverCard) => <FigmaEventCardV2 key={event._id} eventId={event._id.toString()} title={event.title} image={event.image} slug={event.slug} category={event.category} venue={event.location} date={event.date} time={event.time} mode={event.mode} price={event.price || 0} organizer={event.organizer || "DevSphere Community"} organizationName={event.organizer || "DevSphere Community"} organizers={event.organizers} />)}</div> : <DiscoverEmptyState query={params.q} subject="events" />}
+        {events.length > 0 ? <div className="events">{events.map((event: DiscoverCard) => <FigmaEventCardV2 key={event._id} eventId={event._id.toString()} title={event.title} image={event.image} slug={event.slug} category={event.category} venue={event.location} date={event.date} time={event.time} mode={event.mode} price={event.price || 0} organizer={event.organizer || "DevSphere Community"} organizationName={event.organizer || "DevSphere Community"} organizers={event.organizers} timezone={event.timezone} startAtUTC={event.startAtUTC} />)}</div> : <DiscoverEmptyState query={params.q} subject="events" />}
         {totalPages > 1 && <Pagination page={page} totalPages={totalPages} buildPageHref={buildPageHref} />}
     </>;
 }

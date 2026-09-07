@@ -69,6 +69,7 @@ interface StickyBookingBarProps {
     mode: string;
     eventDate?: string;
     eventTime?: string;
+    timezone?: string;
 }
 
 const StickyBookingBar = ({
@@ -83,6 +84,7 @@ const StickyBookingBar = ({
     mode,
     eventDate = "",
     eventTime = "",
+    timezone,
 }: StickyBookingBarProps) => {
     const { isSignedIn, user } = useUser();
     const [isSaved, setIsSaved] = useState(false);
@@ -95,9 +97,16 @@ const StickyBookingBar = ({
     const shortDesc =
         description.length > 85 ? description.substring(0, 85) + "..." : description;
     const bookedAt = new Date().toISOString();
-    const normalizedDate = eventDate || new Date().toISOString();
     const ticketStatus: TicketItem["status"] = "upcoming";
     const ticketType: TicketItem["type"] = isPaid ? "paid" : "free";
+
+    // NOTE: eventDate is used as-is (empty string if not provided by the
+    // parent) rather than fabricating "now" as a fallback — a fabricated
+    // date would silently show the wrong event date on this placeholder
+    // ticket. This placeholder is only shown briefly right after booking;
+    // the authoritative ticket (correct date/time/timezone) is fetched
+    // properly afterward via getUserTickets. Revisit once TicketModal's
+    // handling of an empty eventDate is confirmed.
     const ticket = ticketModalOpen && hasBooked
         ? {
             id: `${eventId}-${slug}`,
@@ -108,10 +117,12 @@ const StickyBookingBar = ({
             eventCategory: category,
             eventSlug: slug,
             eventImage: image,
-            eventDate: normalizedDate,
+            eventDate,
             eventTime,
             eventLocation: location,
             eventMode: mode,
+            eventOrganizer: "Organizer", // placeholder — matches backend's organizerForEvent() fallback; real name resolved via getUserTickets
+            timezone, // now threaded from props, not hardcoded to undefined
             price,
             bookedAt,
             checkedIn: false,

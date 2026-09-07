@@ -4,46 +4,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import SaveButtonIcon from "@/components/ui/SaveButtonIcon";
 import { isEventSaved, toggleWatchlist } from "@/lib/actions/watchlist.actions";
 import { normalizeEventMode } from "@/lib/constants/event-mode";
 import type { DiscoverCard } from "@/lib/discover-events";
+import { getEventDisplayTime } from "@/lib/time";
 
-function formatDate(date: string) {
-    return new Date(date).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
 
-function formatTime(time: string) {
-    const trimmed = time.trim();
-    const twelveHourMatch = trimmed.match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM|PM)$/i);
-
-    if (twelveHourMatch) {
-        const hour = Number(twelveHourMatch[1]);
-        const minutes = twelveHourMatch[2] ?? "00";
-        const meridiem = twelveHourMatch[3].toUpperCase();
-
-        return `${String(hour).padStart(2, "0")}:${minutes} ${meridiem}`;
-    }
-
-    const twentyFourHourMatch = trimmed.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
-
-    if (!twentyFourHourMatch) {
-        return trimmed;
-    }
-
-    const hour24 = Number(twentyFourHourMatch[1]);
-    const minutes = twentyFourHourMatch[2];
-    const meridiem = hour24 >= 12 ? "PM" : "AM";
-    const hour12 = hour24 % 12 || 12;
-
-    return `${String(hour12).padStart(2, "0")}:${minutes} ${meridiem}`;
-}
 
 function truncateText(value: string, maxChars: number) {
     const normalized = value.trim().replace(/\s+/g, " ");
@@ -67,11 +36,17 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
     const { isSignedIn } = useUser();
     const mode = normalizeEventMode(event.mode);
     const modeLabel = mode === "online" ? "Online" : mode === "hybrid" ? "Hybrid" : "Offline";
-    const timeLabel = formatTime(event.time);
     const description = truncateText(
         event.description || "Discover the event details, plan ahead, and bookmark it for later.",
         48
     );
+
+    const { primary: eventDateTime } = getEventDisplayTime({
+        date: event.date,
+        time: event.time,
+        timezone: event.timezone,
+        startAtUTC: event.startAtUTC,
+    });
 
     useEffect(() => {
         let mounted = true;
@@ -175,25 +150,20 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
                             </span>
                         </div>
 
-                        <p className="max-w-[48ch] text-[12px] leading-snug text-slate-600 line-clamp-3">
-                            {description}
-                        </p>
+<p className="max-w-[48ch] text-[12px] leading-snug text-slate-600 line-clamp-3">
+                             {description}
+                         </p>
 
-                        <div className="flex items-center gap-2.5 whitespace-nowrap text-slate-500">
-                            <span className="inline-flex items-center gap-1.5">
-                                <Calendar size={13} />
-                                <span>{formatDate(event.date)}</span>
-                            </span>
+                         <div className="flex items-center gap-2.5 whitespace-nowrap text-slate-500">
+                             <span className="inline-flex items-center gap-1.5">
+                                 <Calendar size={13} />
+                                 <span>{eventDateTime}</span>
+                             </span>
+                         </div>
 
-                            <span className="inline-flex items-center gap-1.5">
-                                <Clock size={13} />
-                                <span>{timeLabel}</span>
-                            </span>
-                        </div>
-
-                        <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
-                            <MapPin size={13} />
-                            <span className="truncate">{event.location}</span>
+                         <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
+                             <MapPin size={13} />
+                             <span className="truncate">{event.location}</span>
                         </span>
                     </div>
                 </div>
@@ -211,12 +181,7 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
                         <div className="flex items-center gap-2.5 whitespace-nowrap text-slate-500">
                             <span className="inline-flex items-center gap-1.5">
                                 <Calendar size={13} />
-                                <span>{formatDate(event.date)}</span>
-                            </span>
-
-                            <span className="inline-flex items-center gap-1.5">
-                                <Clock size={13} />
-                                <span>{timeLabel}</span>
+                                <span>{eventDateTime}</span>
                             </span>
                         </div>
                     </div>

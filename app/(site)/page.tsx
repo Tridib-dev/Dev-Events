@@ -35,10 +35,11 @@ const Page = async () => {
 
       <div className='mt-20 space-y-7'>
         <h3>Featured Events</h3>
+        
         <ul className='events'>
           {events && events.length > 0 && events.map((event : IEvent) =>(
             <li key={event.title}>
-              <EventCard
+            <EventCard
                 eventId={event._id?.toString() || ''}
                 title={event.title}
                 image={event.image}
@@ -62,4 +63,6 @@ const Page = async () => {
 
 export default Page;
 
-
+// TODO(timezone-migration): this EventCard falls back to Asia/Kolkata —
+              // homepage event list has not yet been threaded with timezone/startAtUTC.
+              // Tracked in TIMEZONE_AUDIT_STATE.md "Known gaps" section.

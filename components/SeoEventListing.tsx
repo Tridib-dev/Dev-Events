@@ -53,3 +53,8 @@ const SeoEventListing = ({
 };
 
 export default SeoEventListing;
+
+
+// TODO(timezone-migration): this EventCard falls back to Asia/Kolkata —
+              // homepage event list has not yet been threaded with timezone/startAtUTC.
+              // Tracked in TIMEZONE_AUDIT_STATE.md "Known gaps" section.

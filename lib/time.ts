@@ -75,3 +75,24 @@ export function displayEventTime(
 
   return { primary, secondary };
 }
+
+
+/**
+ * Convenience wrapper for components: takes the raw event fields
+ * (date/time/timezone, optionally a pre-computed startAtUTC) and
+ * returns the same { primary, secondary? } shape as displayEventTime,
+ * without the caller needing to build the Date instant themselves.
+ * This is the function every card/ticket/detail component should call.
+ */
+export function getEventDisplayTime(event: {
+  date: string;
+  time: string;
+  timezone?: string;
+  startAtUTC?: string | Date;
+}): { primary: string; secondary?: string } {
+  const instant = event.startAtUTC
+    ? new Date(event.startAtUTC)
+    : getEventStartUTC(event.date, event.time, event.timezone);
+
+  return displayEventTime(instant, event.timezone || "Asia/Kolkata");
+}

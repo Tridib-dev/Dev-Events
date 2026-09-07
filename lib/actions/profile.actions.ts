@@ -45,9 +45,22 @@ export interface PublicProfile {
         unlockedAt?: string;
         progress?: number;
     }[];
-    organizedEvents: unknown[];
-    attendedEvents: unknown[];
-    coOrganizedEvents: unknown[];
+    organizedEvents: ProfileEventSummary[];
+    attendedEvents: ProfileEventSummary[];
+    coOrganizedEvents: ProfileEventSummary[];
+}
+
+interface ProfileEventSummary {
+    _id: string;
+    title: string;
+    image: string;
+    slug: string;
+    location: string;
+    date: string;
+    time: string;
+    timezone?: string;
+    startAtUTC?: string;
+    organizer?: string;
 }
 
 interface ProfileUserDoc {
@@ -122,7 +135,7 @@ const buildPublicProfile = async (
         CoOrganizer.find({ clerkId: targetClerkId }).select("eventId").lean(),
     ]);
 
-    const coEventIds = coOrganizerEntries.map((entry) => entry.eventId);
+    const coEventIds = coOrganizerEntries.map((entry) => entry.eventId.toString());
     const coOrganizedEvents = coEventIds.length
         ? await Event.find({ _id: { $in: coEventIds } })
             .sort({ date: -1 })
@@ -262,8 +275,18 @@ export const getProfileConnections = async (targetClerkId: string, relation: Con
                 : Promise.resolve([]),
         ]);
 
+        // Raw shape from .lean() — deliberately WITHOUT isFollowing,
+        // since that's computed below, not stored on the User document.
+        type LeanConnectionUser = {
+            clerkId: string;
+            firstName?: string;
+            lastName?: string;
+            username?: string;
+            photo?: string;
+        };
+
         const userMap = new Map(
-            (users as ProfileConnection[]).map((user) => [user.clerkId, user])
+            (users as LeanConnectionUser[]).map((user) => [user.clerkId, user])
         );
         const followingSet = new Set(
             (viewerFollows as { followingId: string }[]).map((edge) => edge.followingId)
@@ -271,7 +294,7 @@ export const getProfileConnections = async (targetClerkId: string, relation: Con
 
         return connectionIds
             .map((clerkId) => userMap.get(clerkId))
-            .filter((user): user is ProfileConnection => !!user)
+            .filter((user): user is LeanConnectionUser => !!user)
             .map((user) => ({
                 clerkId: user.clerkId,
                 firstName: user.firstName ?? "",
@@ -285,7 +308,6 @@ export const getProfileConnections = async (targetClerkId: string, relation: Con
         return [] as ProfileConnection[];
     }
 };
-
 // ─── updateBio ────────────────────────────────────────────────────────────────
 
 export const updateBio = async (bio: string) => {

@@ -11,6 +11,7 @@ import { Watchlist } from "@/database/watchlist.model";
 import { User } from "@/database/User.model";
 import { Event } from "@/database/event.model";
 import { CoOrganizer } from "@/database/coOrganizer.model";
+import { getEventStartUTC } from "../time";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,8 @@ export interface TicketItem {
     bookedAt: string;
     checkedIn: boolean;
     status: "upcoming" | "past" | "expired";
+    startAtUTC?: string;
+    timezone?: string;
 }
 
 export interface UserStats {
@@ -57,6 +60,8 @@ export interface OrganizedEventItem {
     status: "upcoming" | "past";
     attendeeCount: number;
     revenue: number;
+    startAtUTC?: string;
+    timezone?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,12 +94,16 @@ function organizerForEvent(event: any, profiles: Map<string, OrganizerProfile>):
     };
 }
 
-function categorize(dateStr: string): "upcoming" | "past" | "expired" {
-    const eventDate = new Date(dateStr);
+function categorize(
+    event: { date: string; time: string; timezone?: string; startAtUTC?: string | Date }
+): "upcoming" | "past" | "expired" {
+    const instant = event.startAtUTC
+        ? new Date(event.startAtUTC)
+        : getEventStartUTC(event.date, event.time, event.timezone);
     const now = new Date();
-    const diffDays = (now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24);
+    const diffDays = (now.getTime() - instant.getTime()) / (1000 * 60 * 60 * 24);
 
-    if (eventDate > now) return "upcoming";
+    if (instant > now) return "upcoming";
     if (diffDays <= 30) return "past";
     return "expired";
 }
@@ -147,7 +156,14 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
                 price: 0,
                 bookedAt: (b as any).createdAt,
                 checkedIn: (b as any).checkedIn ?? false,
-                status: categorize(ev.date),
+                startAtUTC: ev.startAtUTC?.toISOString(),
+                timezone: ev.timezone,
+                status: categorize({
+                    date: ev.date,
+                    time: ev.time,
+                    timezone: ev.timezone,
+                    startAtUTC: ev.startAtUTC,
+                }),
             });
         }
 
@@ -174,7 +190,14 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
                 price: paiseToRupees(o.amount),
                 bookedAt: (o as any).createdAt,
                 checkedIn: false,
-                status: categorize(ev.date),
+                startAtUTC: ev.startAtUTC?.toISOString(),
+                timezone: ev.timezone,
+                status: categorize({
+                    date: ev.date,
+                    time: ev.time,
+                    timezone: ev.timezone,
+                    startAtUTC: ev.startAtUTC,
+                }),
             });
         }
 
@@ -218,8 +241,10 @@ export const getUserStats = cache(async (): Promise<UserStats> => {
     }
 });
 
-function organizedEventStatus(dateStr: string): "upcoming" | "past" {
-    return categorize(dateStr) === "upcoming" ? "upcoming" : "past";
+function organizedEventStatus(
+    event: { date: string; time: string; timezone?: string; startAtUTC?: string | Date }
+): "upcoming" | "past" {
+    return categorize(event) === "upcoming" ? "upcoming" : "past";
 }
 
 async function buildOrganizedEventItems(events: any[]): Promise<OrganizedEventItem[]> {
@@ -265,10 +290,17 @@ async function buildOrganizedEventItems(events: any[]): Promise<OrganizedEventIt
             organizerImage: organizer.image,
             mode: ev.mode,
             price: ev.price ?? 0,
-            status: organizedEventStatus(ev.date),
+            status: organizedEventStatus({
+                    date: ev.date,
+                    time: ev.time,
+                    timezone: ev.timezone,
+                    startAtUTC: ev.startAtUTC,
+                }),
             attendeeCount: freeCount + paidData.count,
             // Order.amount is stored as integer paise; dashboard event values are displayed in rupees.
             revenue: paiseToRupees(paidData.revenue),
+            startAtUTC: ev.startAtUTC?.toISOString(),
+            timezone: ev.timezone,
         };
     });
 }
@@ -308,7 +340,7 @@ export const getCoOrganizedEvents = cache(async (): Promise<OrganizedEventItem[]
 
         if (!coOrganizerEntries.length) return [];
 
-        const eventIds = coOrganizerEntries.map((entry) => entry.eventId);
+        const eventIds = coOrganizerEntries.map((entry) => entry.eventId.toString());
 
         const events = await Event.find({
             _id: { $in: eventIds },

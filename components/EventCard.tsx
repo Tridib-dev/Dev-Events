@@ -9,6 +9,7 @@ import { useUser } from "@clerk/nextjs";
 import { toggleWatchlist, isEventSaved } from "@/lib/actions/watchlist.actions";
 import { getAttendeesCount } from "@/lib/actions/booking.actions";
 import { normalizeEventMode } from "@/lib/constants/event-mode";
+import { getEventDisplayTime } from "@/lib/time";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SaveButtonIcon from "@/components/ui/SaveButtonIcon";
 
@@ -26,20 +27,21 @@ export interface EventProps {
   hostName?: string;
   hostAvatar?: string;
   organization?: string;
-}
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  timezone?: string;
+  startAtUTC?: string | Date;
 }
 
 export default function EventCard({
   eventId, title, image, slug, location, date, time, mode, price = 0,
   tags = [], hostName = "Alex Rivera", hostAvatar, organization = "DevSphere Community",
+  timezone, startAtUTC,
 }: EventProps) {
+  const { primary: eventDateTime } = getEventDisplayTime({
+    date,
+    time,
+    timezone,
+    startAtUTC,
+  });
   const [isSaved, setIsSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(true);
   const [attendees, setAttendees] = useState(0);
@@ -101,9 +103,9 @@ export default function EventCard({
         <div className="flex flex-1 flex-col p-4 sm:p-5">
           <div className="mb-3 flex min-w-0 items-center gap-1.5 text-[12px] text-slate-500"><MapPin size={14} className="shrink-0 text-slate-400" /><span className="truncate">{location}</span></div>
           <h3 className="min-h-[2.75rem] line-clamp-2 text-[18px] font-semibold leading-[1.35] tracking-[-0.03em] text-slate-900 transition-colors group-hover:text-indigo-700">{title}</h3>
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[12px] text-slate-500">
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Calendar size={14} className="text-slate-400" />{formatDate(date)}</span>
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Clock size={14} className="text-slate-400" />{time}</span>
+<div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[12px] text-slate-500">
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Calendar size={14} className="text-slate-400" />{eventDateTime}</span>
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Clock size={14} className="text-slate-400" />{time}</span>
           </div>
           <div className="mt-4 min-h-[2rem]">
             {tags.length > 0 && <div className="flex flex-wrap gap-1.5">

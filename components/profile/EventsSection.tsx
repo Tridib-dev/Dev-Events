@@ -10,6 +10,9 @@ type EventItem = {
     slug: string;
     image: string;
     date: string;
+    time: string;
+    timezone?: string;
+    startAtUTC?: string;
     location: string;
     mode?: string;
     price?: number;
@@ -29,6 +32,9 @@ function EventCard({ event }: { event: EventItem }) {
             category={event.category}
             location={event.location}
             date={event.date}
+            time={event.time}
+            timezone={event.timezone}
+            startAtUTC={event.startAtUTC}
             tags={event.tags || []}
             price={event.price ?? 0}
             isSaved={false}

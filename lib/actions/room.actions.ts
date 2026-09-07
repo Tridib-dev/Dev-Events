@@ -400,10 +400,5 @@ export async function ensureRoomForEvent(eventId: string): Promise<RoomPublicMet
 
 
 
-// parseEventStart in room.actions.ts — add this comment above it
-// TIMEZONE ASSUMPTION (tracked for post-MVP fix): treats event.date/event.time as
-// literal UTC digits, matching normalizeDateToIso/normalizeTime's current behavior.
-// Real fix requires storing the organizer's intended timezone on Event and converting
-// here instead of appending "Z" directly. Until then, all users see the same absolute
-// countdown/start time regardless of their own timezone, which is correct only if
-// organizer and attendees are assumed to share one timezone.
+// parseEventStart in room.actions.ts — uses getEventStartUTC to convert
+// event.date/event/time + event.timezone into a proper UTC instant.

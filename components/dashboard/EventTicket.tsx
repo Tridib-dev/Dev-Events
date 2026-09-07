@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, MapPin, Tag } from "lucide-react";
 import SafeImage from "./savedPage";
 import CopyIcon from "../CopyIcon";
-
+import { getEventDisplayTime } from "@/lib/time";
 
 export interface EventTicketProps {
     id: string;
@@ -27,15 +27,11 @@ export interface EventTicketProps {
     status: "upcoming" | "past" | "expired";
     username?: string;
     attendeeName?: string;
+    timezone?: string;
+    startAtUTC?: string; 
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatDate(d: string) {
-    return new Date(d).toLocaleDateString("en-IN", {
-        day: "numeric", month: "short", year: "numeric",
-    });
-}
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 // Barcode: uppercase alphanumeric, max 20 chars
 function toBarcodeValue(id: string) {
@@ -98,6 +94,8 @@ export default function EventTicket({
     status,
     username,
     attendeeName,
+    timezone,
+    startAtUTC,  
 }: EventTicketProps) {
     const ticketRef  = useRef<HTMLDivElement>(null);
     const [downloading, setDownloading] = useState(false);
@@ -110,6 +108,13 @@ export default function EventTicket({
     const isExpired    = status === "expired";
     const shouldTear   = status === "past" && checkedIn;
     const displayName  = username?.trim() || attendeeName?.trim() || "Guest";
+
+    const { primary: eventDateTime } = getEventDisplayTime({
+        date: eventDate,
+        time: eventTime,
+        timezone,
+        startAtUTC,
+    });
 
     const handleDownload = useCallback(async () => {
         if (!ticketRef.current || downloading) return;
@@ -228,8 +233,7 @@ export default function EventTicket({
                 <div className="px-6 py-4 space-y-3">
                     {[
                         { Icon: MapPin,   label: "Location", value: eventLocation },
-                        { Icon: Calendar, label: "Date",     value: formatDate(eventDate) },
-                        { Icon: Clock,    label: "Time",     value: eventTime },
+                        { Icon: Calendar, label: "When", value: eventDateTime },
                         {
                             Icon: Tag,
                             label: "Pricing",

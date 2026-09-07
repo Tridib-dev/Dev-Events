@@ -61,6 +61,8 @@ const toEventPayload = (eventDocument: HydratedDocument<IEvent>): EventPayload =
   sponsors: eventDocument.sponsors || [], // ← Add this
   createdAt: eventDocument.createdAt,
   updatedAt: eventDocument.updatedAt,
+  timezone: eventDocument.timezone,
+  startAtUTC: eventDocument.startAtUTC,
 });
 
 export async function GET(

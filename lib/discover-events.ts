@@ -23,6 +23,8 @@ export interface DiscoverCard {
     location: string;
     date: string;
     time: string;
+    timezone?: string;
+    startAtUTC?: string | Date;
     image: string;
     tags: string[];
     mode: string;
@@ -404,31 +406,33 @@ async function queryDiscoverEvents(
                     { $skip: skip },
                     { $limit: limit },
                         {
-                            $project: {
-                                title: 1,
-                                slug: 1,
-                                description: 1,
-                                location: 1,
-                                date: 1,
-                                time: 1,
-                            image: 1,
-                            tags: 1,
-                            mode: 1,
-                                category: 1,
-                                organizer: 1,
-                                price: 1,
-                                creatorClerkId: 1,
-                                organizers: {
-                                    $map: {
-                                        input: "$organizerProfiles",
-                                        as: "profile",
-                                        in: {
-                                            name: { $trim: { input: { $concat: ["$$profile.firstName", " ", { $ifNull: ["$$profile.lastName", ""] }] } } },
-                                            avatar: "$$profile.photo",
-                                        },
-                                    },
-                                },
-                        },
+$project: {
+                                 title: 1,
+                                 slug: 1,
+                                 description: 1,
+                                 location: 1,
+                                 date: 1,
+                                 time: 1,
+                                 timezone: 1,
+                                 startAtUTC: 1,
+                                 image: 1,
+                                 tags: 1,
+                                 mode: 1,
+                                 category: 1,
+                                 organizer: 1,
+                                 price: 1,
+                                 creatorClerkId: 1,
+                                 organizers: {
+                                     $map: {
+                                         input: "$organizerProfiles",
+                                         as: "profile",
+                                         in: {
+                                             name: { $trim: { input: { $concat: ["$$profile.firstName", " ", { $ifNull: ["$$profile.lastName", ""] }] } } },
+                                             avatar: "$$profile.photo",
+                                         },
+                                     },
+                                 },
+                             },
                     },
                 ],
                 totalCount: [{ $count: "total" }],

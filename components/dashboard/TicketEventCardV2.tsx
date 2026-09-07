@@ -6,20 +6,13 @@ import { ArrowUpRight, Calendar, Clock, MapPin, User } from "lucide-react";
 import { motion } from "framer-motion";
 import type { TicketItem } from "@/lib/actions/dashboard.actions";
 import { normalizeEventMode } from "@/lib/constants/event-mode";
+import { getEventDisplayTime } from "@/lib/time";
 
 const STATUS_COLORS = {
     upcoming: { dot: "#22c55e", label: "Upcoming", bg: "rgba(34,197,94,0.10)", border: "rgba(34,197,94,0.20)" },
     past: { dot: "#0891b2", label: "Attended", bg: "rgba(6,182,212,0.10)", border: "rgba(6,182,212,0.20)" },
     expired: { dot: "#64748b", label: "Expired", bg: "rgba(100,116,139,0.10)", border: "rgba(100,116,139,0.18)" },
 };
-
-function formatDate(date: string) {
-    return new Date(date).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
 
 type Props = {
     ticket: TicketItem;
@@ -31,6 +24,12 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
     const status = STATUS_COLORS[ticket.status];
     const mode = normalizeEventMode(ticket.eventMode);
     const modeLabel = mode === "online" ? "Online" : mode === "hybrid" ? "Hybrid" : "Offline";
+    const { primary: eventDateTime } = getEventDisplayTime({
+        date: ticket.eventDate,
+        time: ticket.eventTime,
+        timezone: ticket.timezone,
+        startAtUTC: ticket.startAtUTC,
+    });
 
     return (
         <motion.article
@@ -96,16 +95,12 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
                             </p>
                         </div>
 
-                        <div className="space-y-2 lg:text-right">
-                            <p className="flex items-center gap-1.5 lg:justify-end">
-                                <Calendar size={11} className="shrink-0" />
-                                <span>{formatDate(ticket.eventDate)}</span>
-                            </p>
-                            <p className="flex items-center gap-1.5 lg:justify-end">
-                                <Clock size={11} className="shrink-0" />
-                                <span>{ticket.eventTime}</span>
-                            </p>
-                        </div>
+<div className="space-y-2 lg:text-right">
+                             <p className="flex items-center gap-1.5 lg:justify-end">
+                                 <Calendar size={11} className="shrink-0" />
+                                 <span>{eventDateTime}</span>
+                             </p>
+                         </div>
                     </div>
 
                     {ticket.checkedIn && (

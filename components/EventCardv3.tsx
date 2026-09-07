@@ -12,6 +12,7 @@ import SafeImage from "@/components/dashboard/savedPage";
 import SaveButtonIcon from "@/components/ui/SaveButtonIcon";
 import { toggleWatchlist } from "@/lib/actions/watchlist.actions";
 import { toast } from "sonner";
+import { getEventDisplayTime } from "@/lib/time";
 
 export interface EventCardHProps {
     eventId: string;
@@ -22,21 +23,16 @@ export interface EventCardHProps {
     category?: string;
     location: string;
     date: string;
+    time: string;
     tags?: string[];
     price: number;
     isSaved?: boolean;
     onUnsave?: (eventId: string) => void; // optional: called after unsaving so parent can remove card
+    timezone?: string;
+    startAtUTC?: string | Date;
 }
 
 const MAX_TAGS = 2;
-
-function formatDate(d: string) {
-    return new Date(d).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
 
 export default function EventCardH({
     eventId,
@@ -47,10 +43,13 @@ export default function EventCardH({
     category,
     location,
     date,
+    time,
     tags = [],
     price,
     isSaved: initialSaved = false,
     onUnsave,
+    timezone,
+    startAtUTC,
 }: EventCardHProps) {
     const [saved, setSaved] = useState(initialSaved);
     const [saving, setSaving] = useState(false);
@@ -61,6 +60,13 @@ export default function EventCardH({
     const isPaid = price > 0;
     const shortDesc =
         description.length > 90 ? description.slice(0, 90) + "…" : description;
+
+    const { primary: eventDateTime } = getEventDisplayTime({
+        date,
+        time,
+        timezone,
+        startAtUTC,
+    });
 
     const handleBookmarkToggle = async () => {
         if (saving) return;
@@ -147,9 +153,9 @@ export default function EventCardH({
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <rect width="18" height="18" x="3" y="4" rx="2"/>
                                     <line x1="3" x2="21" y1="10" y2="10"/>
-                                </svg>
-                                {formatDate(date)}
-                            </span>
+</svg>
+                                 {eventDateTime}
+                             </span>
                         </div>
                     </div>
                 </div>

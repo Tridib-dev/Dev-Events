@@ -1,29 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { getEventStartUTC } from "@/lib/time";
 import { Badge } from "@/components/ui/badge";
 import { edTokens } from "@/components/event-dashboard/theme/tokens";
 
-function parseEventDate(date: string, time: string) {
+function parseEventDate(date: string, time: string, timezone?: string) {
+    const tz = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
     const datePart = date.trim().split("T")[0];
     const hasDatePart = /^\d{4}-\d{2}-\d{2}$/.test(datePart);
     const hasTimePart = /^\d{2}:\d{2}$/.test(time);
 
     if (hasDatePart) {
-        const displayDate = new Date(`${datePart}T12:00:00.000Z`);
-        const startDate = hasTimePart
-            ? new Date(`${datePart}T${time}:00.000Z`)
-            : new Date(`${datePart}T00:00:00.000Z`);
+        const startDate = getEventStartUTC(date, time, tz);
+        const displayDate = Number.isNaN(startDate.getTime()) ? null : startDate;
 
         return {
-            displayDate: Number.isNaN(displayDate.getTime()) ? null : displayDate,
-            startDate: Number.isNaN(startDate.getTime()) ? null : startDate,
+            displayDate,
+            startDate,
         };
     }
 
     const fallback = new Date(date);
+    const displayDate = Number.isNaN(fallback.getTime()) ? null : fallback;
+
     return {
-        displayDate: Number.isNaN(fallback.getTime()) ? null : fallback,
+        displayDate,
         startDate: Number.isNaN(fallback.getTime()) ? null : fallback,
     };
 }

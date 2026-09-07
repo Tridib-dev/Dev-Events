@@ -3,14 +3,7 @@
 import { Calendar, Clock, MapPin } from "lucide-react";
 import type { DiscoverCard } from "@/lib/discover-events";
 import { cn } from "@/lib/utils";
-
-function formatDate(date: string) {
-    return new Date(date).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
+import { getEventDisplayTime } from "@/lib/time";
 
 function formatTime(time: string) {
     const trimmed = time.trim();
@@ -46,6 +39,12 @@ type Props = {
 
 export function EventBannerContent({ event, compact = false }: Props) {
     const timeLabel = formatTime(event.time);
+    const { primary: eventDateTime } = getEventDisplayTime({
+        date: event.date,
+        time: event.time,
+        timezone: event.timezone,
+        startAtUTC: event.startAtUTC,
+    });
 
     return (
         // Full-width backdrop at bottom with split layout (left: title/details, right: metadata)
@@ -69,17 +68,12 @@ export function EventBannerContent({ event, compact = false }: Props) {
                 {/* RIGHT: Date, Time, Location */}
                 <div className="flex flex-col gap-1.5 text-right">
                     {/* Date and Time in same row */}
-                    <div className="flex items-center gap-2 sm:gap-3 justify-end text-white">
-                        <div className="flex items-center gap-1 text-xs sm:text-xs lg:text-sm">
-                            <Calendar size={12} className="sm:size-3 lg:size-4 shrink-0" />
-                            <span className="whitespace-nowrap">{formatDate(event.date)}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-1 text-xs sm:text-xs lg:text-sm">
-                            <Clock size={12} className="sm:size-3 lg:size-4 shrink-0" />
-                            <span className="whitespace-nowrap">{timeLabel}</span>
-                        </div>
-                    </div>
+<div className="flex items-center gap-2 sm:gap-3 justify-end text-white">
+                         <div className="flex items-center gap-1 text-xs sm:text-xs lg:text-sm">
+                             <Calendar size={12} className="sm:size-3 lg:size-4 shrink-0" />
+                             <span className="whitespace-nowrap">{eventDateTime}</span>
+                         </div>
+                     </div>
 
                     {/* Location on new line */}
                     <div className="flex items-center gap-1 text-xs sm:text-xs lg:text-sm text-slate-200 justify-end">

@@ -52,7 +52,7 @@ export const CreateBooking = async ({
         
         // Fetch event details for email — fire and forget, never blocks booking
         const eventDoc = await Event.findById(eventId)
-            .select("title date time location slug")
+            .select("title date time location slug startAtUTC timezone")
             .lean<EventEmailDoc>();
         
         await sendBookingConfirmation({

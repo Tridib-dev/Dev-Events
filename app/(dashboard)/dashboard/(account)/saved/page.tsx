@@ -17,6 +17,7 @@ type SavedEventItem = {
         category?: string;
         location: string;
         date: string;
+        time: string;
         tags?: string[];
         price?: number;
     } | null;
@@ -51,27 +52,28 @@ export default async function SavedPage() {
                 </div>
             ) : (
                 <div className="grid gap-3">
-                    {saved.map((item) => {
-                        const ev = item.eventId;
-                        if (!ev) return null;
+{saved.map((item) => {
+                         const ev = item.eventId;
+                         if (!ev) return null;
 
-                        return (
-                            <EventCardV2
-                                key={item._id}
-                                eventId={ev._id ?? item._id}
-                                slug={ev.slug}
-                                title={ev.title}
-                                description={ev.description ?? ""}
-                                image={ev.image}
-                                category={ev.category}
-                                location={ev.location}
-                                date={ev.date}
-                                tags={ev.tags ?? []}
-                                price={ev.price ?? 0}
-                                isSaved
-                            />
-                        );
-                    })}
+                         return (
+                             <EventCardV2
+                                 key={item._id}
+                                 eventId={ev._id ?? item._id}
+                                 slug={ev.slug}
+                                 title={ev.title}
+                                 description={ev.description ?? ""}
+                                 image={ev.image}
+                                 category={ev.category}
+                                 location={ev.location}
+                                 date={ev.date}
+                                 time={ev.time}
+                                 tags={ev.tags ?? []}
+                                 price={ev.price ?? 0}
+                                 isSaved
+                             />
+                         );
+                     })}
                 </div>
             )}
         </div>

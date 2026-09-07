@@ -87,6 +87,8 @@ export default function TicketModal({ ticket, onClose }: Props) {
                             checkedIn={ticket.checkedIn}
                             status={ticket.status}
                             username={ticket.username}
+                            timezone={ticket.timezone}
+                            startAtUTC={ticket.startAtUTC}
                         />
                     </motion.div>
                 </motion.div>
