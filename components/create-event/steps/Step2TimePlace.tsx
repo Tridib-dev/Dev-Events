@@ -1,9 +1,10 @@
 'use client';
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { EventDraft } from "../types";
 import ModeCards from "../fields/ModeCards";
 import LocationFields from "../fields/LocationFields";
+import { resolveEventTimezoneAction } from "@/lib/actions/geo.actions";
 
 interface Step2Props {
   draft: EventDraft;
@@ -11,11 +12,84 @@ interface Step2Props {
 }
 
 const Step2TimePlace = ({ draft, onUpdate }: Step2Props) => {
+  const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    const { countryCode, stateCode, city } = draft.location;
+    
+    if (!countryCode || !stateCode || !city) {
+      return;
+    }
+
+    const currentRequestId = ++requestIdRef.current;
+
+    // Clear any previous/default timezone immediately when location changes.
+    onUpdate({ timezone: "" });
+
+    const timeout = setTimeout(async () => {
+      try {
+        const resolved = await resolveEventTimezoneAction(
+          countryCode,
+          stateCode,
+          city
+        );
+
+        // Ignore stale responses.
+        if (currentRequestId !== requestIdRef.current) {
+          return;
+        }
+
+        console.log("TIMEZONE DEBUG:", {
+          countryCode,
+          stateCode,
+          city,
+          resolved,
+        });
+
+        onUpdate({
+          timezone: resolved ?? "",
+        });
+      } catch (error) {
+        if (currentRequestId !== requestIdRef.current) {
+          return;
+        }
+
+        console.error("TIMEZONE RESOLUTION FAILED:", error);
+
+        onUpdate({
+          timezone: "",
+        });
+      }
+    }, 600);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [
+    draft.location.countryCode,
+    draft.location.stateCode,
+    draft.location.city,
+    onUpdate,
+  ]);
+
+  console.log("RENDER TIMEZONE:", {
+    draftTimezone: draft.timezone,
+    city: draft.location.city,
+    countryCode: draft.location.countryCode,
+    stateCode: draft.location.stateCode,
+  });
+
   return (
     <>
       <p className="cew-step-eyebrow">Step 2 of 7</p>
-      <h1 className="cew-step-title">When and where does it happen?</h1>
-      <p className="cew-step-subtitle">Pin down the logistics — attendees plan around this first.</p>
+
+      <h1 className="cew-step-title">
+        When and where does it happen?
+      </h1>
+
+      <p className="cew-step-subtitle">
+        Pin down the logistics — attendees plan around this first.
+      </p>
 
       <div className="cew-step-body">
         <div className="field-row">
@@ -29,6 +103,7 @@ const Step2TimePlace = ({ draft, onUpdate }: Step2Props) => {
               onChange={(e) => onUpdate({ date: e.target.value })}
             />
           </div>
+
           <div className="field">
             <label htmlFor="time">Time</label>
             <input
@@ -41,7 +116,10 @@ const Step2TimePlace = ({ draft, onUpdate }: Step2Props) => {
           </div>
         </div>
 
-        <ModeCards value={draft.mode} onChange={(mode) => onUpdate({ mode })} />
+        <ModeCards
+          value={draft.mode}
+          onChange={(mode) => onUpdate({ mode })}
+        />
 
         <div className="field-row">
           <div className="field">
@@ -55,6 +133,7 @@ const Step2TimePlace = ({ draft, onUpdate }: Step2Props) => {
               placeholder="Moscone Center"
             />
           </div>
+
           <div className="field">
             <label htmlFor="address">Address</label>
             <input
@@ -68,7 +147,35 @@ const Step2TimePlace = ({ draft, onUpdate }: Step2Props) => {
           </div>
         </div>
 
-        <LocationFields onChange={(location) => onUpdate({ location })} />
+        <LocationFields
+          onChange={(location) => onUpdate({ location })}
+        />
+
+        <div className="field">
+          <label htmlFor="timezone">Event timezone</label>
+
+          <select
+            id="timezone"
+            value={draft.timezone}
+            onChange={(e) =>
+              onUpdate({ timezone: e.target.value })
+            }
+            required
+            disabled={!draft.location.city}
+          >
+            <option value="" disabled>
+              {draft.location.city
+                ? "Detecting…"
+                : "Select a location first"}
+            </option>
+
+            {Intl.supportedValuesOf("timeZone").map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </>
   );

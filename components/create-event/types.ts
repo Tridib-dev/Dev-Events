@@ -20,6 +20,7 @@ export interface EventDraft {
   // Step 2 — Time & place
   date: string;
   time: string;
+  timezone: string;
   mode: EventMode | "";
   venue: string;
   address: string;
@@ -55,6 +56,7 @@ export const emptyDraft: EventDraft = {
 
   date: "",
   time: "",
+  timezone: "", 
   mode: "",
   venue: "",
   address: "",
@@ -115,6 +117,7 @@ export const validateStep = (draft: EventDraft, step: WizardStepKey): boolean =>
       return (
         !!draft.date &&
         !!draft.time &&
+        !!draft.timezone && 
         !!draft.mode &&
         draft.venue.trim().length > 0 &&
         draft.address.trim().length > 0 &&
