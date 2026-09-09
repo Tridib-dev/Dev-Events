@@ -85,6 +85,8 @@ const normalizeDiscoverCards = (events: any[]): DiscoverCard[] =>
         location: event.location ?? "",
         date: event.date ?? "",
         time: event.time ?? "",
+        timezone: event.timezone ?? "",
+        startAtUTC: event.startAtUTC ?? undefined,
         image: event.image ?? "",
         tags: Array.isArray(event.tags) ? event.tags : [],
         mode: event.mode ?? "",

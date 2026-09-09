@@ -38,8 +38,9 @@ const buildFormData = (draft: ReturnType<typeof useEventDraft>["draft"]): FormDa
   fd.append("location", `${draft.location.city}, ${draft.location.state}`);
   fd.append("category", draft.category);
   fd.append("date", draft.date);
-  fd.append("time", draft.time);
-  fd.append("mode", draft.mode);
+fd.append("time", draft.time);
+   fd.append("timezone", draft.timezone);
+   fd.append("mode", draft.mode);
   fd.append("organizer", draft.organizer);
   fd.append("price", String(draft.isFree ? 0 : draft.price));
   const validSponsors = draft.sponsors.filter((s) => s.name.trim() && s.website.trim());
@@ -51,8 +52,7 @@ const buildFormData = (draft: ReturnType<typeof useEventDraft>["draft"]): FormDa
 draft.audience.forEach((a) => fd.append("audience", a));
 draft.organizerEmails.forEach((email) => fd.append("organizerEmails", email));
 
-  const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  fd.append("timezone", detectedTimezone);
+
 
   if (draft.imageFile) {
     fd.append("image", draft.imageFile);
