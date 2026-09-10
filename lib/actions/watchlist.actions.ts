@@ -56,7 +56,7 @@ export const getSavedEvents = async () => {
         const saved = await Watchlist.find({ clerkId: userId })
             .populate({
                 path: "eventId",
-                select: "title date time location slug startAtUTC timezone image",
+                select: "title date time location slug startAtUTC timezone image mode description price",
             })
             .sort({ createdAt: -1 });               
 

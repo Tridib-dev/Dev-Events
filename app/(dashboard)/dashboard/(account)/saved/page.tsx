@@ -20,6 +20,9 @@ type SavedEventItem = {
         time: string;
         tags?: string[];
         price?: number;
+        timezone?: string;
+        startAtUTC?: string | Date;
+        mode?: string;
     } | null;
 };
 
@@ -69,6 +72,9 @@ export default async function SavedPage() {
                                 time={ev.time}
                                 tags={ev.tags ?? []}
                                 price={ev.price ?? 0}
+                                timezone={ev.timezone}
+                                startAtUTC={ev.startAtUTC}
+                                mode={ev.mode}
                                 isSaved
                             />
                         );

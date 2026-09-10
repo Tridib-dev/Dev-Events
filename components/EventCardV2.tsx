@@ -5,11 +5,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SafeImage from "@/components/dashboard/savedPage";
 import SaveButtonIcon from "@/components/ui/SaveButtonIcon";
 import { toggleWatchlist } from "@/lib/actions/watchlist.actions";
+import { getAttendeesCount } from "@/lib/actions/booking.actions";
 import { toast } from "sonner";
+import { Clock, Calendar, Users , MapIcon  } from "lucide-react";
 import { getEventDisplayTime } from "@/lib/time";
 import { normalizeEventMode } from "@/lib/constants/event-mode";
 
@@ -54,7 +56,20 @@ export default function EventCardH({
 }: EventCardHProps) {
     const [saved, setSaved] = useState(initialSaved);
     const [saving, setSaving] = useState(false);
+    const [attendees, setAttendees] = useState(0);
     const router = useRouter();
+
+    useEffect(() => {
+        let mounted = true;
+
+        getAttendeesCount(eventId).then((count) => {
+            if (mounted) setAttendees(count);
+        });
+
+        return () => {
+            mounted = false;
+        };
+    }, [eventId]);
 
     const visibleTags = tags.slice(0, MAX_TAGS);
     const extraTags = tags.length - MAX_TAGS;
@@ -68,6 +83,7 @@ export default function EventCardH({
         timezone,
         startAtUTC,
     }, normalizedMode);
+    const [eventDateLabel, eventTimeLabel] = eventDateTime.split(" · ");
 
     const handleBookmarkToggle = async () => {
         if (saving) return;
@@ -86,10 +102,15 @@ export default function EventCardH({
     };
 
     return (
-        <article className="group relative flex min-w-0 gap-3.5 rounded-[18px] border border-slate-200 bg-white p-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md sm:gap-4">
+        <article className="group relative flex min-w-0 gap-3.5 p-1 rounded-[18px] border border-slate-200 bg-white p-0.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md sm:gap-4">
             <Link href={`/events/${slug}`} className="contents">
             {/* Left — Event image */}
-            <div className="relative min-h-[108px] w-[112px] shrink-0 self-stretch overflow-hidden rounded-[10px] bg-slate-100 sm:w-[136px]">
+                <div className="relative h-[108px] w-[112px] p-1 shrink-0 overflow-hidden rounded-[10px] bg-slate-100
+                    sm:h-[108px] sm:w-[136px]
+                    md:h-[118px] md:w-[180px]
+                    lg:h-[130px] lg:w-[220px]
+                    xl:h-[140px] xl:w-[240px]"
+                >
                 <SafeImage
                     src={image}
                     alt={title}
@@ -101,8 +122,8 @@ export default function EventCardH({
             </div>
 
             {/* Right — Content */}
-            <div className="flex min-w-0 flex-1 pr-12 sm:pr-14">
-                <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+            <div className="flex h-full min-w-0 flex-1 pr-12 sm:pr-14 md:pr-[220px] lg:pr-[250px]">
+                <div className="flex h-full min-w-0 flex-1 flex-col py-0.5">
                     <div>
                         {category && (
                             <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-600">
@@ -136,21 +157,28 @@ export default function EventCardH({
                             </div>
                         )}
 
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500">
-                            <span className="flex items-center gap-1 truncate">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                                    <circle cx="12" cy="10" r="3"/>
-                                </svg>
-                                <span className="truncate">{location}</span>
+                    </div>
+
+                    <div className="mt-2 min-w-0 pb-0 text-[11px] text-slate-500 md:mt-auto md:pb-1">
+                        <div className="min-w-0 sm:max-w-[220px] lg:max-w-[260px]">
+                            <span className="flex min-w-0 items-center gap-1">
+                                <MapIcon size={12} className="shrink-0" />
+                                <span className="min-w-0 truncate">{location}</span>
                             </span>
-<span className="flex-shrink-0 flex items-center gap-1">
-                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                     <rect width="18" height="18" x="3" y="4" rx="2"/>
-                                     <line x1="3" x2="21" y1="10" y2="10"/>
-                                 </svg>
-                                 {eventDateTime}
-                             </span>
+                            <div className="mt-0.5 flex min-w-0 flex-col gap-0.5 text-slate-500 md:flex-row md:items-center md:gap-3">
+                                <div className="flex min-w-0 items-center gap-1">
+                                    <Calendar size={12} className="shrink-0" />
+                                    <span className="truncate whitespace-nowrap">
+                                        {eventDateLabel}
+                                    </span>
+                                </div>
+                                <div className="flex min-w-0 items-center gap-1">
+                                    <Clock size={12} className="shrink-0" />
+                                    <span className="truncate whitespace-nowrap">
+                                        {eventTimeLabel}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -158,11 +186,28 @@ export default function EventCardH({
 
             </Link>
 
+            <div className="absolute right-3 top-3 hidden items-center gap-2 md:flex">
+                {/* Future badges can be added before the attendee count here. */}
+                <span className="inline-flex items-center gap-1 whitespace-nowrap text-[15px] text-slate-700">
+                    <Users size={12} className="shrink-0" />
+                    {attendees} {"Joined"}
+                </span>
+
+                <span
+                    className={isPaid
+                        ? "rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700"
+                        : "rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700"
+                    }
+                >
+                    {isPaid ? `₹${price.toLocaleString("en-IN")}` : "Free"}
+                </span>
+            </div>
+
             <span
-                className={isPaid
-                    ? "absolute right-3 top-3 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700"
-                    : "absolute right-3 top-3 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700"
-                }
+                className={`${isPaid
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    } absolute right-3 top-3 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold md:hidden`}
             >
                 {isPaid ? `₹${price.toLocaleString("en-IN")}` : "Free"}
             </span>
