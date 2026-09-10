@@ -13,6 +13,7 @@ import SaveButtonIcon from "@/components/ui/SaveButtonIcon";
 import { toggleWatchlist } from "@/lib/actions/watchlist.actions";
 import { toast } from "sonner";
 import { getEventDisplayTime } from "@/lib/time";
+import { normalizeEventMode } from "@/lib/constants/event-mode";
 
 export interface EventCardHProps {
     eventId: string;
@@ -30,6 +31,7 @@ export interface EventCardHProps {
     onUnsave?: (eventId: string) => void; // optional: called after unsaving so parent can remove card
     timezone?: string;
     startAtUTC?: string | Date;
+    mode?: string;
 }
 
 const MAX_TAGS = 2;
@@ -49,6 +51,7 @@ export default function EventCardH({
     isSaved: initialSaved = false,
     onUnsave,
     timezone,
+    mode,
     startAtUTC,
 }: EventCardHProps) {
     const [saved, setSaved] = useState(initialSaved);
@@ -61,12 +64,13 @@ export default function EventCardH({
     const shortDesc =
         description.length > 90 ? description.slice(0, 90) + "…" : description;
 
+    const normalizedMode = normalizeEventMode(mode);
     const { primary: eventDateTime } = getEventDisplayTime({
         date,
         time,
         timezone,
         startAtUTC,
-    });
+    }, normalizedMode);
 
     const handleBookmarkToggle = async () => {
         if (saving) return;

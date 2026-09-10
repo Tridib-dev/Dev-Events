@@ -46,8 +46,7 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
         time: event.time,
         timezone: event.timezone,
         startAtUTC: event.startAtUTC,
-    });
-
+    }, mode);
     useEffect(() => {
         let mounted = true;
 

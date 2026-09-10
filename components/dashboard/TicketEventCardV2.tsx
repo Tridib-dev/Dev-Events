@@ -29,7 +29,7 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
         time: ticket.eventTime,
         timezone: ticket.timezone,
         startAtUTC: ticket.startAtUTC,
-    });
+    }, mode);
 
     return (
         <motion.article

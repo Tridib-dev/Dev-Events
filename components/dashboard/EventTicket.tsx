@@ -11,6 +11,7 @@ import { Calendar, Clock, MapPin, Tag } from "lucide-react";
 import SafeImage from "./savedPage";
 import CopyIcon from "../CopyIcon";
 import { getEventDisplayTime } from "@/lib/time";
+import { normalizeEventMode } from "@/lib/constants/event-mode";
 
 export interface EventTicketProps {
     id: string;
@@ -28,7 +29,8 @@ export interface EventTicketProps {
     username?: string;
     attendeeName?: string;
     timezone?: string;
-    startAtUTC?: string; 
+    startAtUTC?: string;
+    mode?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -95,7 +97,8 @@ export default function EventTicket({
     username,
     attendeeName,
     timezone,
-    startAtUTC,  
+    startAtUTC,
+    mode,
 }: EventTicketProps) {
     const ticketRef  = useRef<HTMLDivElement>(null);
     const [downloading, setDownloading] = useState(false);
@@ -109,11 +112,13 @@ export default function EventTicket({
     const shouldTear   = status === "past" && checkedIn;
     const displayName  = username?.trim() || attendeeName?.trim() || "Guest";
 
+    const normalizedMode = normalizeEventMode(mode);
     const { primary: eventDateTime } = getEventDisplayTime({
         date: eventDate,
         time: eventTime,
         timezone,
         startAtUTC,
+        mode: normalizedMode,
     });
 
     const handleDownload = useCallback(async () => {
@@ -181,210 +186,210 @@ export default function EventTicket({
                             }}
                         />
 
-                    {/* Category */}
-                    {eventCategory && (
-                        <span
-                            className="absolute top-3 left-3 text-[9px] font-semibold uppercase tracking-[0.14em] px-2 py-0.5 rounded-full"
-                            style={{
-                                background: "rgba(0,0,0,0.55)",
-                                backdropFilter: "blur(6px)",
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                color: "rgba(255,255,255,0.6)",
-                            }}
-                        >
-                            {eventCategory}
-                        </span>
-                    )}
-
-                    {/* Status */}
-                    <span
-                        className="absolute top-3 right-3 text-[10px] font-semibold px-2.5 py-0.5 rounded-full"
-                        style={{
-                            background: cfg.bg,
-                            border: `1px solid ${cfg.border}`,
-                            color: cfg.color,
-                            backdropFilter: "blur(6px)",
-                        }}
-                    >
-                        {cfg.label}
-                    </span>
-                </div>
-
-                {/* ── Title ── */}
-                <div className="px-6 pt-4 pb-2">
-                    <h3
-                        className="text-[17px] font-bold text-white leading-snug"
-                        style={{ letterSpacing: "-0.02em" }}
-                    >
-                        {eventTitle}
-                    </h3>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-white/25 mt-1">
-                        {type === "paid" ? "Paid Ticket" : "Free Ticket"}
-                    </p>
-                    {attendeeName && (
-                        <p className="text-[11px] text-white/35 mt-1">{attendeeName}</p>
-                    )}
-                </div>
-
-                {/* ── Rip 1 ── */}
-                <RipLine />
-
-                {/* ── Details ── */}
-                <div className="px-6 py-4 space-y-3">
-                    {[
-                        { Icon: MapPin,   label: "Location", value: eventLocation },
-                        { Icon: Calendar, label: "When", value: eventDateTime },
-                        {
-                            Icon: Tag,
-                            label: "Pricing",
-                            value: isPaid
-                                ? `₹${price.toLocaleString("en-IN")} · Paid`
-                                : "Free",
-                            valueColor: isPaid ? "#f59e0b" : "#22c55e",
-                        },
-                    ].map(({ Icon, label, value, valueColor }) => (
-                        <div key={label} className="flex items-center justify-between">
-                            <span className="flex items-center gap-2 text-[11px] text-white/35">
-                                <Icon size={11} style={{ color: "rgba(6,182,212,0.6)" }} />
-                                {label}
-                            </span>
+                        {/* Category */}
+                        {eventCategory && (
                             <span
-                                className="text-[12px] font-medium text-right max-w-[170px] truncate"
-                                style={{ color: valueColor ?? "rgba(255,255,255,0.75)" }}
+                                className="absolute top-3 left-3 text-[9px] font-semibold uppercase tracking-[0.14em] px-2 py-0.5 rounded-full"
+                                style={{
+                                    background: "rgba(0,0,0,0.55)",
+                                    backdropFilter: "blur(6px)",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    color: "rgba(255,255,255,0.6)",
+                                }}
                             >
-                                {value}
+                                {eventCategory}
                             </span>
-                        </div>
-                    ))}
-                </div>
+                        )}
 
-                {/* ── Rip 2 ── */}
-                <RipLine />
-
-                {/* ── Verification stub ── */}
-                <AnimatePresence>
-                    {!stubTorn ? (
-                        <motion.div
-                            key="stub"
-                            initial={{ opacity: 1, y: 0 }}
-                            animate={
-                                shouldTear
-                                    ? { opacity: [1, 1, 0], y: [0, 0, 28] }
-                                    : { opacity: 1, y: 0 }
-                            }
-                            transition={
-                                shouldTear
-                                    ? { duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.5 }
-                                    : {}
-                            }
-                            onAnimationComplete={() => {
-                                if (shouldTear) setStubTorn(true);
+                        {/* Status */}
+                        <span
+                            className="absolute top-3 right-3 text-[10px] font-semibold px-2.5 py-0.5 rounded-full"
+                            style={{
+                                background: cfg.bg,
+                                border: `1px solid ${cfg.border}`,
+                                color: cfg.color,
+                                backdropFilter: "blur(6px)",
                             }}
-                            className="rounded-b-2xl overflow-hidden"
                         >
-                            <div className="px-5 py-5">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
-                                            Scan to verify
-                                        </p>
-                                        <p className="text-[11px] text-white/45 mt-1">
-                                            QR and barcode for gate validation
-                                        </p>
-                                    </div>
-                                </div>
+                            {cfg.label}
+                        </span>
+                    </div>
 
-                                <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-4">
-                                    {/* Left rail: QR + barcode */}
-                                    <div className="space-y-3">
-                                        <div
-                                            className="rounded-xl overflow-hidden p-2.5 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
-                                            style={{ background: "#ffffff" }}
-                                        >
-                                            <QRCodeSVG
-                                                value={qrValue}
-                                                size={88}
-                                                bgColor="#ffffff"
-                                                fgColor="#000000"
-                                                level="H"
-                                                includeMargin={false}
-                                            />
-                                        </div>
-                                    </div>
+                    {/* ── Title ── */}
+                    <div className="px-6 pt-4 pb-2">
+                        <h3
+                            className="text-[17px] font-bold text-white leading-snug"
+                            style={{ letterSpacing: "-0.02em" }}
+                        >
+                            {eventTitle}
+                        </h3>
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/25 mt-1">
+                            {type === "paid" ? "Paid Ticket" : "Free Ticket"}
+                        </p>
+                        {attendeeName && (
+                            <p className="text-[11px] text-white/35 mt-1">{attendeeName}</p>
+                        )}
+                    </div>
 
-                                    {/* Right rail: ticket metadata */}
-                                    <div className="min-w-0 pt-1">
-                                        <div className="space-y-4">
-                                            <div>
-                                                <div className="flex items-center gap-1.5">
-                                                  <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
-                                                    Ticket ID
-                                                  </p>
-                                                  <CopyIcon text={barcodeValue} size={12} className="text-white/40 hover:text-white/70" />
-                                                </div>
-                                                <p className="mt-1.5 text-[12px] font-mono text-white/80 truncate">
-                                                    {barcodeValue}
-                                                </p>
-                                            </div>
+                    {/* ── Rip 1 ── */}
+                    <RipLine />
 
-                                            <div>
-                                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
-                                                    Username
-                                                </p>
-                                                <p className="mt-1.5 text-[12px] font-medium text-white/80 truncate">
-                                                    {displayName}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {checkedIn && (
-                                            <p className="mt-4 inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                                Checked in
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="mt-4 space-y-2">
-                                    <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
-                                        Barcode
-                                    </p>
-                                    <div
-                                        className="rounded-xl overflow-hidden px-2 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
-                                        style={{ background: "#ffffff" }}
-                                    >
-                                        <Barcode
-                                            value={barcodeValue}
-                                            width={1.35}
-                                            height={56}
-                                            displayValue={false}
-                                            background="#ffffff"
-                                            lineColor="#000000"
-                                            margin={4}
-                                        />
-                                    </div>
-                                    <p className="text-[9px] font-mono tracking-[0.14em] text-white/20 text-center">
-                                        {barcodeValue}
-                                    </p>
-                                </div>
+                    {/* ── Details ── */}
+                    <div className="px-6 py-4 space-y-3">
+                        {[
+                            { Icon: MapPin,   label: "Location", value: eventLocation },
+                            { Icon: Calendar, label: "When", value: eventDateTime },
+                            {
+                                Icon: Tag,
+                                label: "Pricing",
+                                value: isPaid
+                                    ? `₹${price.toLocaleString("en-IN")} · Paid`
+                                    : "Free",
+                                valueColor: isPaid ? "#f59e0b" : "#22c55e",
+                            },
+                        ].map(({ Icon, label, value, valueColor }) => (
+                            <div key={label} className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-[11px] text-white/35">
+                                    <Icon size={11} style={{ color: "rgba(6,182,212,0.6)" }} />
+                                    {label}
+                                </span>
+                                <span
+                                    className="text-[12px] font-medium text-right max-w-[170px] truncate"
+                                    style={{ color: valueColor ?? "rgba(255,255,255,0.75)" }}
+                                >
+                                    {value}
+                                </span>
                             </div>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="torn"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="py-5 flex items-center justify-center rounded-b-2xl"
-                        >
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-600/50">
-                                Stub Detached · Attended
-                            </span>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+                        ))}
+                    </div>
+
+                    {/* ── Rip 2 ── */}
+                    <RipLine />
+
+                    {/* ── Verification stub ── */}
+                    <AnimatePresence>
+                        {!stubTorn ? (
+                            <motion.div
+                                key="stub"
+                                initial={{ opacity: 1, y: 0 }}
+                                animate={
+                                    shouldTear
+                                        ? { opacity: [1, 1, 0], y: [0, 0, 28] }
+                                        : { opacity: 1, y: 0 }
+                                }
+                                transition={
+                                    shouldTear
+                                        ? { duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.5 }
+                                        : {}
+                                }
+                                onAnimationComplete={() => {
+                                    if (shouldTear) setStubTorn(true);
+                                }}
+                                className="rounded-b-2xl overflow-hidden"
+                            >
+                                <div className="px-5 py-5">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
+                                                Scan to verify
+                                            </p>
+                                            <p className="text-[11px] text-white/45 mt-1">
+                                                QR and barcode for gate validation
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-4">
+                                        {/* Left rail: QR + barcode */}
+                                        <div className="space-y-3">
+                                            <div
+                                                className="rounded-xl overflow-hidden p-2.5 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
+                                                style={{ background: "#ffffff" }}
+                                            >
+                                                <QRCodeSVG
+                                                    value={qrValue}
+                                                    size={88}
+                                                    bgColor="#ffffff"
+                                                    fgColor="#000000"
+                                                    level="H"
+                                                    includeMargin={false}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Right rail: ticket metadata */}
+                                        <div className="min-w-0 pt-1">
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
+                                                            Ticket ID
+                                                        </p>
+                                                        <CopyIcon text={barcodeValue} size={12} className="text-white/40 hover:text-white/70" />
+                                                    </div>
+                                                    <p className="mt-1.5 text-[12px] font-mono text-white/80 truncate">
+                                                        {barcodeValue}
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
+                                                        Username
+                                                    </p>
+                                                    <p className="mt-1.5 text-[12px] font-medium text-white/80 truncate">
+                                                        {displayName}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {checkedIn && (
+                                                <p className="mt-4 inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                                    Checked in
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 space-y-2">
+                                            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
+                                                Barcode
+                                            </p>
+                                            <div
+                                                className="rounded-xl overflow-hidden px-2 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
+                                                style={{ background: "#ffffff" }}
+                                            >
+                                                <Barcode
+                                                    value={barcodeValue}
+                                                    width={1.35}
+                                                    height={56}
+                                                    displayValue={false}
+                                                    background="#ffffff"
+                                                    lineColor="#000000"
+                                                    margin={4}
+                                                />
+                                            </div>
+                                            <p className="text-[9px] font-mono tracking-[0.14em] text-white/20 text-center">
+                                                {barcodeValue}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                </motion.div>
+                        ) : (
+                            <motion.div
+                                key="torn"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="py-5 flex items-center justify-center rounded-b-2xl"
+                            >
+                                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-600/50">
+                                    Stub Detached · Attended
+                                </span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
 
                 {/* ── Download ── */}
                 <div className="sticky bottom-3 z-20 flex justify-center pt-4 pb-1 pointer-events-none">

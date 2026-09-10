@@ -28,6 +28,7 @@ export interface EventCardHProps {
     onUnsave?: (eventId: string) => void; // optional: called after unsaving so parent can remove card
     timezone?: string;
     startAtUTC?: string | Date;
+    mode?: string;
 }
 
 const MAX_TAGS = 2;
@@ -48,6 +49,7 @@ export default function EventCardH({
     onUnsave,
     timezone,
     startAtUTC,
+    mode,
 }: EventCardHProps) {
     const [saved, setSaved] = useState(initialSaved);
     const [saving, setSaving] = useState(false);
@@ -64,7 +66,7 @@ export default function EventCardH({
         time,
         timezone,
         startAtUTC,
-    });
+    }, mode);
 
     const handleBookmarkToggle = async () => {
         if (saving) return;

@@ -4,6 +4,7 @@ import { Calendar, Clock, MapPin } from "lucide-react";
 import type { DiscoverCard } from "@/lib/discover-events";
 import { cn } from "@/lib/utils";
 import { getEventDisplayTime } from "@/lib/time";
+import { normalizeEventMode } from "@/lib/constants/event-mode";
 
 function formatTime(time: string) {
     const trimmed = time.trim();
@@ -39,12 +40,13 @@ type Props = {
 
 export function EventBannerContent({ event, compact = false }: Props) {
     const timeLabel = formatTime(event.time);
+    const mode = normalizeEventMode(event.mode);
     const { primary: eventDateTime } = getEventDisplayTime({
         date: event.date,
         time: event.time,
         timezone: event.timezone,
         startAtUTC: event.startAtUTC,
-    });
+    }, mode);
 
     return (
         // Full-width backdrop at bottom with split layout (left: title/details, right: metadata)

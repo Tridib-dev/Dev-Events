@@ -55,3 +55,24 @@ describe("displayEventTime", () => {
     expect(secondary).toBeUndefined();
   });
 });
+
+describe("displayEventTime — mode awareness", () => {
+  it("online event shows VIEWER's time as primary, not the host's", () => {
+    const instant = getEventStartUTC("2026-12-05", "19:00", "Asia/Kolkata"); // 7 PM IST
+    const result = displayEventTime(instant, "Asia/Kolkata", "America/New_York", "Online");
+    expect(result.primary).toContain("8:30 AM"); // 7 PM IST = 8:30 AM EST same day
+    expect(result.secondary).toContain("7:00 PM"); // host's time, secondary
+  });
+
+  it("in-person event still shows VENUE's time as primary, unaffected by mode logic existing", () => {
+    const instant = getEventStartUTC("2026-12-05", "19:00", "Asia/Kolkata");
+    const result = displayEventTime(instant, "Asia/Kolkata", "America/New_York", "In-Person");
+    expect(result.primary).toContain("7:00 PM"); // venue's time, unchanged
+  });
+
+  it("does not show a redundant secondary line for alias zones (Kolkata/Calcutta)", () => {
+    const instant = getEventStartUTC("2026-12-05", "19:00", "Asia/Kolkata");
+    const result = displayEventTime(instant, "Asia/Kolkata", "Asia/Calcutta", "In-Person");
+    expect(result.secondary).toBeUndefined();
+  });
+});

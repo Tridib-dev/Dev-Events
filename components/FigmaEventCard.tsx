@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import SaveButtonIcon from "@/components/ui/SaveButtonIcon";
 import { getEventDisplayTime } from "@/lib/time";
+import { normalizeEventMode } from "@/lib/constants/event-mode";
 
 const defaultImage = "https://www.figma.com/api/mcp/asset/e1f65abf-4b5b-4b6f-bd11-fdfda2ad9e0a.png";
 const defaultOrganizerImages = [
@@ -42,20 +43,23 @@ export default function FigmaEventCard({
     attendees = 2847, organizer = "DevSphere Community", organizerImages = defaultOrganizerImages, price = 0,
     isSaved: initialSaved = false, onSaveChange,
     timezone,
+    mode,
     startAtUTC,
 }: FigmaEventCardProps) {
   const [saved, setSaved] = useState(initialSaved);
   const href = slug === "discover" ? "/events/discover" : `/events/${slug}`;
-const handleSave = () => { const nextSaved = !saved; setSaved(nextSaved); onSaveChange?.(nextSaved); };
+  const handleSave = () => { const nextSaved = !saved; setSaved(nextSaved); onSaveChange?.(nextSaved); };
 
-   const { primary: eventDateTime } = getEventDisplayTime({
+  const normalizedMode = normalizeEventMode(mode);
+  const { primary: eventDateTime } = getEventDisplayTime({
         date,
         time,
         timezone,
         startAtUTC,
+        mode: normalizedMode,
     });
 
-   return (
+  return (
     <article className="group relative flex w-full flex-col overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-[0_18px_36px_rgba(15,23,42,0.12)]">
       <div className="relative aspect-[380/210] w-full shrink-0 overflow-hidden bg-slate-100">
         <img src={image} alt={title} className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />

@@ -35,11 +35,11 @@ export default function FigmaEventCardV2({
   const visiblePeople = people.slice(0, 3);
   const extraPeople = Math.max(0, people.length - visiblePeople.length);
   const { primary: eventDateTime } = getEventDisplayTime({
-      date,       // or whatever the actual prop name is — need to confirm
+      date,
       time,
       timezone,
       startAtUTC,
-  });
+  }, normalizedMode);
   useEffect(() => {
     let mounted = true;
     async function initialize() {

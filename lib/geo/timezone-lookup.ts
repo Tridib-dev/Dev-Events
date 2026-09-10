@@ -21,12 +21,6 @@ function offlineFallback(
     return tzLookup(Number(city.latitude), Number(city.longitude));
   }
 
-  const state = State.getStatesOfCountry(countryCode).find((s) => s.isoCode === stateCode);
-
-  if (state && hasValidCoordinates(state.latitude, state.longitude)) {
-    return tzLookup(Number(state.latitude), Number(state.longitude));
-  }
-
   return null;
 }
 
@@ -74,20 +68,15 @@ export async function resolveEventTimezone(
     return null;
   }
 
-  // 1. PRIMARY: GeoNames — curated timezone data, not derived from
-  //    potentially-corrupted coordinates.
-  
+  // 1. FIRST: offline coordinates + tz-lookup (lower-confidence fallback)
   const offline = offlineFallback(country, state, city);
-  console.log("resolveEventTimezone: offline fallback gave:", offline); // TEMPORARY  
+  console.log("resolveEventTimezone: offline fallback gave:", offline); // TEMPORARY
   if (offline) {
     return offline;
   }
 
-  // 2. FALLBACK ONLY: offline coordinates + tz-lookup. Used only when
-  //    GeoNames is unreachable or has no record for this city — accepted
-  //    as a lower-confidence fallback, not because it's assumed accurate,
-  //    but because *some* answer here is better than forcing the
-  //    organizer to manually search a 400+ entry dropdown.
+  // 2. SECOND: GeoNames — curated timezone data, not derived from
+  //    potentially-corrupted coordinates.
   const fromGeoNames = await fetchFromGeoNames(city, country);
   console.log("resolveEventTimezone: GeoNames gave:", fromGeoNames);
   return fromGeoNames;

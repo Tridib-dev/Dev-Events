@@ -40,7 +40,7 @@ export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = fals
         time: event.time,
         timezone: event.timezone,
         startAtUTC: event.startAtUTC,
-    });
+    }, mode);
 
     return (
         <motion.article
