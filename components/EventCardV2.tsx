@@ -11,6 +11,7 @@ import SaveButtonIcon from "@/components/ui/SaveButtonIcon";
 import { toggleWatchlist } from "@/lib/actions/watchlist.actions";
 import { toast } from "sonner";
 import { getEventDisplayTime } from "@/lib/time";
+import { normalizeEventMode } from "@/lib/constants/event-mode";
 
 export interface EventCardHProps {
     eventId: string;
@@ -60,13 +61,13 @@ export default function EventCardH({
     const isPaid = price > 0;
     const shortDesc =
         description.length > 90 ? description.slice(0, 90) + "…" : description;
-
+    const normalizedMode = normalizeEventMode(mode);
     const { primary: eventDateTime } = getEventDisplayTime({
         date,
         time,
         timezone,
         startAtUTC,
-    }, mode);
+    }, normalizedMode);
 
     const handleBookmarkToggle = async () => {
         if (saving) return;
@@ -85,10 +86,10 @@ export default function EventCardH({
     };
 
     return (
-        <article className="group relative flex min-w-0 gap-3.5 rounded-[18px] border border-slate-200 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md sm:gap-4">
+        <article className="group relative flex min-w-0 gap-3.5 rounded-[18px] border border-slate-200 bg-white p-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md sm:gap-4">
             <Link href={`/events/${slug}`} className="contents">
             {/* Left — Event image */}
-            <div className="relative min-h-[108px] w-[112px] shrink-0 self-stretch overflow-hidden rounded-[13px] bg-slate-100 sm:w-[136px]">
+            <div className="relative min-h-[108px] w-[112px] shrink-0 self-stretch overflow-hidden rounded-[10px] bg-slate-100 sm:w-[136px]">
                 <SafeImage
                     src={image}
                     alt={title}

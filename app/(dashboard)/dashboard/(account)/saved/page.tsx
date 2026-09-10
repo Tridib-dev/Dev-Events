@@ -1,4 +1,4 @@
-// app/(dashboard)/dashboard/saved/page.tsx
+// app/(dashboard)/dashboard/(account)/saved/page.tsx
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/shell";
 import { getSavedEvents } from "@/lib/actions/watchlist.actions";
@@ -52,28 +52,27 @@ export default async function SavedPage() {
                 </div>
             ) : (
                 <div className="grid gap-3">
-{saved.map((item) => {
-                         const ev = item.eventId;
-                         if (!ev) return null;
-
-                         return (
-                             <EventCardV2
-                                 key={item._id}
-                                 eventId={ev._id ?? item._id}
-                                 slug={ev.slug}
-                                 title={ev.title}
-                                 description={ev.description ?? ""}
-                                 image={ev.image}
-                                 category={ev.category}
-                                 location={ev.location}
-                                 date={ev.date}
-                                 time={ev.time}
-                                 tags={ev.tags ?? []}
-                                 price={ev.price ?? 0}
-                                 isSaved
-                             />
-                         );
-                     })}
+                    {saved.map((item) => {
+                        const ev = item.eventId;
+                        if (!ev) return null;
+                        return (
+                            <EventCardV2
+                                key={item._id}
+                                eventId={ev._id ?? item._id}
+                                slug={ev.slug}
+                                title={ev.title}
+                                description={ev.description ?? ""}
+                                image={ev.image}
+                                category={ev.category}
+                                location={ev.location}
+                                date={ev.date}
+                                time={ev.time}
+                                tags={ev.tags ?? []}
+                                price={ev.price ?? 0}
+                                isSaved
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>

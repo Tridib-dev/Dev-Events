@@ -56,9 +56,9 @@ export const getSavedEvents = async () => {
         const saved = await Watchlist.find({ clerkId: userId })
             .populate({
                 path: "eventId",
-                select: "title date time location slug startAtUTC timezone",
+                select: "title date time location slug startAtUTC timezone image",
             })
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 });               
 
         // Filter out any orphaned saves where the event was deleted
         return JSON.parse(

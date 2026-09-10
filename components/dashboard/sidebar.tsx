@@ -211,7 +211,7 @@ function SidebarPromo({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
     return (
         <div
             className={cn(
-                "relative overflow-hidden rounded-[22px] border border-blue-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(239,246,255,0.98)_100%)] shadow-[0_16px_30px_rgba(15,23,42,0.06)]",
+                "relative overflow-hidden rounded-[12px] border border-blue-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(239,246,255,0.98)_100%)] shadow-[0_16px_30px_rgba(15,23,42,0.06)]",
                 collapsed ? "mx-[6px] p-2" : "mx-[6px] p-[10px]"
             )}
         >
