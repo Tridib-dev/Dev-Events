@@ -30,6 +30,7 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
         timezone: ticket.timezone,
         startAtUTC: ticket.startAtUTC,
     }, mode);
+    const [eventDateLabel, eventTimeLabel] = eventDateTime.split(" · ");
 
     return (
         <motion.article
@@ -38,7 +39,7 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
             transition={{ delay: index * 0.05, duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className="group h-full w-[min(74vw,248px)] shrink-0 sm:w-[236px] lg:w-[232px]"
         >
-            <div className="flex h-full min-h-[242px] flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-md">
+            <div className="flex h-full min-h-[318px] flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-md">
                 <div className="relative aspect-[16/10] overflow-hidden">
                     <Image
                         src={ticket.eventImage || "https://placehold.co/900x600/f1f5f9/475569?text=Event"}
@@ -71,36 +72,35 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
                         </span>
                     </div>
 
-                    <div className="mt-2.5 grid gap-3 text-[11px] text-slate-500 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-                        <div className="space-y-2">
-                            <p className="flex items-center gap-1.5">
-                                <MapPin size={11} className="shrink-0" />
-                                <span className="truncate">{ticket.eventLocation}</span>
-                            </p>
-                            <p className="flex items-center gap-1.5">
-                                <span className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500">
-                                    {ticket.eventOrganizerImage ? (
-                                        <Image
-                                            src={ticket.eventOrganizerImage}
-                                            alt={ticket.eventOrganizer || "Organizer"}
-                                            width={20}
-                                            height={20}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <User size={9} />
-                                    )}
-                                </span>
-                                <span className="truncate">{ticket.eventOrganizer || "Organizer"}</span>
-                            </p>
-                        </div>
-
-<div className="space-y-2 lg:text-right">
-                             <p className="flex items-center gap-1.5 lg:justify-end">
-                                 <Calendar size={11} className="shrink-0" />
-                                 <span>{eventDateTime}</span>
-                             </p>
-                         </div>
+                    <div className="mt-2.5 space-y-2 text-[11px] text-slate-500">
+                        <p className="flex min-w-0 items-center gap-1.5">
+                            <MapPin size={11} className="shrink-0" />
+                            <span className="truncate">{ticket.eventLocation}</span>
+                        </p>
+                        <p className="flex min-w-0 items-center gap-1.5">
+                            <Calendar size={11} className="shrink-0" />
+                            <span className="truncate whitespace-nowrap">{eventDateLabel}</span>
+                        </p>
+                        <p className="flex min-w-0 items-center gap-1.5">
+                            <Clock size={11} className="shrink-0" />
+                            <span className="truncate whitespace-nowrap">{eventTimeLabel}</span>
+                        </p>
+                        <p className="flex min-w-0 items-center gap-1.5">
+                            <span className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500">
+                                {ticket.eventOrganizerImage ? (
+                                    <Image
+                                        src={ticket.eventOrganizerImage}
+                                        alt={ticket.eventOrganizer || "Organizer"}
+                                        width={20}
+                                        height={20}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <User size={9} />
+                                )}
+                            </span>
+                            <span className="truncate">{ticket.eventOrganizer || "Organizer"}</span>
+                        </p>
                     </div>
 
                     {ticket.checkedIn && (

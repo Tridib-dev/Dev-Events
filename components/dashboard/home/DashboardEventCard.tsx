@@ -41,6 +41,7 @@ export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = fals
         timezone: event.timezone,
         startAtUTC: event.startAtUTC,
     }, mode);
+    const [eventDateLabel, eventTimeLabel] = eventDateTime.split(" · ");
 
     return (
         <motion.article
@@ -83,42 +84,34 @@ export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = fals
                     </div>
 
                     <div className={compact ? "mt-2.5 space-y-1.5 text-[11px] text-slate-500" : "mt-3 space-y-2 text-[12px] text-slate-500"}>
-                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-                            <div className="space-y-2.5">
-                                <p className="flex items-center gap-1.5">
-                                    <MapPin size={compact ? 11 : 12} className="shrink-0" />
-                                    <span className="truncate">{event.location}</span>
-                                </p>
-
-                                <p className="flex items-center gap-2">
-                                    <span className={compact ? "inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500" : "inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500"}>
-                                        {event.organizerImage ? (
-                                            <Image
-                                                src={event.organizerImage}
-                                                alt={event.organizer}
-                                                width={compact ? 20 : 24}
-                                                height={compact ? 20 : 24}
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <User size={compact ? 9 : 10} />
-                                        )}
-                                    </span>
-                                    <span className="truncate">{event.organizer || "Organizer"}</span>
-                                </p>
-                            </div>
-
-                            <div className="space-y-1.5 lg:text-right">
-                                <p className="flex items-center gap-1.5 lg:justify-end">
-                                    <Calendar size={compact ? 11 : 12} className="shrink-0" />
-                                    <span>{eventDateTime}</span>
-                                </p>
-                                <p className="flex items-center gap-1.5 lg:justify-end">
-                                    <Clock size={compact ? 11 : 12} className="shrink-0" />
-                                    <span>{event.time}</span>
-                                </p>
-                            </div>
-                        </div>
+                        <p className="flex min-w-0 items-center gap-1.5">
+                            <MapPin size={compact ? 11 : 12} className="shrink-0" />
+                            <span className="truncate">{event.location}</span>
+                        </p>
+                        <p className="flex min-w-0 items-center gap-1.5">
+                            <Calendar size={compact ? 11 : 12} className="shrink-0" />
+                            <span className="truncate whitespace-nowrap">{eventDateLabel}</span>
+                        </p>
+                        <p className="flex min-w-0 items-center gap-1.5">
+                            <Clock size={compact ? 11 : 12} className="shrink-0" />
+                            <span className="truncate whitespace-nowrap">{eventTimeLabel}</span>
+                        </p>
+                        <p className="flex min-w-0 items-center gap-2">
+                            <span className={compact ? "inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500" : "inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500"}>
+                                {event.organizerImage ? (
+                                    <Image
+                                        src={event.organizerImage}
+                                        alt={event.organizer}
+                                        width={compact ? 20 : 24}
+                                        height={compact ? 20 : 24}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <User size={compact ? 9 : 10} />
+                                )}
+                            </span>
+                            <span className="truncate">{event.organizer || "Organizer"}</span>
+                        </p>
                     </div>
 
                     <div className={compact ? "mt-auto pt-3" : "mt-auto pt-4"}>
