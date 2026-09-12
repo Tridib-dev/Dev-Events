@@ -2,15 +2,10 @@ import type { EventActivityItem } from "@/lib/event-dashboard/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import HorizontalScrollProgress from "@/components/event-dashboard/shared/HorizontalScrollProgress";
+import ViewerTimestamp from "@/components/ViewerTimestamp";
 
 function formatWhen(timestamp: string) {
-    const date = new Date(timestamp);
-    return date.toLocaleString("en-IN", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    return timestamp;
 }
 
 function kindLabel(kind: EventActivityItem["kind"]) {
@@ -70,7 +65,7 @@ export default function ActivityFeed({
                                     )}
                                 </div>
                                 <span className="flex-shrink-0 text-[11px] text-slate-400 sm:text-right">
-                                    {formatWhen(item.timestamp)}
+                                    <ViewerTimestamp value={formatWhen(item.timestamp)} />
                                 </span>
                             </div>
                         ))

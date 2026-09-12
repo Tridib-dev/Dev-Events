@@ -3,6 +3,9 @@
 import { cache } from "react";
 import { isValidObjectId } from "mongoose";
 import { getEventAttendees } from "@/lib/actions/gate.actions";
+import { Event } from "@/database/event.model";
+import { DEFAULT_EVENT_TIMEZONE } from "@/lib/time";
+import { DateTime } from "luxon";
 
 export type ApplicantFilter = "all" | "checked-in" | "pending";
 
@@ -25,6 +28,7 @@ export interface EventApplicantsData {
     pending: number;
     todaySignups: number;
     checkinRate: number;
+    reportingTimezone: string;
 }
 
 export const getEventApplicants = cache(
@@ -36,13 +40,15 @@ export const getEventApplicants = cache(
             pending: 0,
             todaySignups: 0,
             checkinRate: 0,
+            reportingTimezone: DEFAULT_EVENT_TIMEZONE,
         };
 
         if (!isValidObjectId(eventId)) return empty;
 
         const data = await getEventAttendees(eventId);
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+        const event = await Event.findById(eventId).select("timezone").lean<{ timezone?: string }>();
+        const reportingTimezone = event?.timezone || DEFAULT_EVENT_TIMEZONE;
+        const todayStart = DateTime.now().setZone(reportingTimezone).startOf("day").toUTC().toJSDate();
 
         let rows: EventApplicantRow[] = data.attendees.map((attendee) => ({
             id: attendee.id,
@@ -76,6 +82,7 @@ export const getEventApplicants = cache(
             pending: data.remaining,
             todaySignups,
             checkinRate,
+            reportingTimezone,
         };
     }
 );

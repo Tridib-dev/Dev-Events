@@ -11,6 +11,7 @@ import { getTagLink, getCategoryLink, getCityLink } from "@/lib/event-links";
 import StickyBookingBar from "@/components/BookEvent";
 import CommentSection from "@/components/CommentSection";
 import EventSponsors from "@/components/EventSponsors";
+import EventScheduleDisplay from "@/components/EventScheduleDisplay";
 
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -32,6 +33,8 @@ type SimilarEvent = {
     image: string;
     mode?: string;
     tags?: string[];
+    timezone?: string;
+    startAtUTC?: string;
 };
 
 const Agenda = ({ agendaItems }: { agendaItems: IAgendaItem[] }) => (
@@ -121,8 +124,16 @@ async function EventContent({ slug }: { slug: string }) {
 
                     <section className="flex-col-gap-2">
                         <h2>Event Details</h2>
-                        <EventDetailItem icon="/icons/calendar.svg" alt="calendar" label={date} />
-                        <EventDetailItem icon="/icons/clock.svg" alt="time" label={time} />
+                        <div className="flex items-center gap-2">
+                            <Image src="/icons/calendar.svg" alt="calendar" width={17} height={17} />
+                            <EventScheduleDisplay
+                                date={date}
+                                time={time}
+                                timezone={event.timezone}
+                                startAtUTC={event.startAtUTC}
+                                mode={mode}
+                            />
+                        </div>
 
                         <Link
                             href={getCityLink({ city, state, country })}
@@ -181,6 +192,8 @@ async function EventContent({ slug }: { slug: string }) {
                               date={similarEvent.date}
                               time={similarEvent.time}
                               mode={similarEvent.mode}
+                              timezone={similarEvent.timezone}
+                              startAtUTC={similarEvent.startAtUTC}
                               price={0}
                               tags={similarEvent.tags}
                               hostName="Unknown Organizer"

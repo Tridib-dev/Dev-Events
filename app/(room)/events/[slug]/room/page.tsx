@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getEventBySlug } from "@/lib/actions/event.actions";
 import { ensureRoomForEvent } from "@/lib/actions/room.actions";
+import { isGateAuthorized } from "@/lib/actions/gate.actions";
 import RoomGate from "@/components/room/RoomGate";
 
 type PageParams = Promise<{ slug?: string }>;
@@ -17,6 +18,8 @@ export default async function RoomPage({ params }: { params: PageParams }) {
 
   if (!meta) notFound();
 
+  const viewerIsOrganizer = await isGateAuthorized(eventId);
+
   return (
     <RoomGate
       eventId={eventId}
@@ -26,6 +29,7 @@ export default async function RoomPage({ params }: { params: PageParams }) {
       initialPhase={meta.phase}
       scheduledStart={meta.scheduledStart}
       scheduledEnd={meta.scheduledEnd}
+      viewerIsOrganizer={viewerIsOrganizer}
     />
   );
 }

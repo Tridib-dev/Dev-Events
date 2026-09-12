@@ -13,6 +13,7 @@ export interface EventSettingsPatch {
     overview?: string;
     date?: string;
     time?: string;
+    timezone?: string;
     venue?: string;
     location?: string;
     address?: string;
@@ -56,6 +57,8 @@ export interface EventSettingsSummary {
     overview: string;
     date: string;
     time: string;
+    timezone: string;
+    startAtUTC?: string;
     venue: string;
     location: string;
     address: string;
@@ -80,7 +83,7 @@ export const getEventSettings = cache(
 
         const event = await Event.findById(eventId)
             .select(
-                "title description overview date time venue location address city state country price isFree mode category slug"
+                "title description overview date time timezone startAtUTC venue location address city state country price isFree mode category slug"
             )
             .lean<{
                 title: string;
@@ -88,6 +91,8 @@ export const getEventSettings = cache(
                 overview: string;
                 date: string;
                 time: string;
+                timezone?: string;
+                startAtUTC?: Date;
                 venue: string;
                 location: string;
                 address: string;
@@ -109,6 +114,8 @@ export const getEventSettings = cache(
             overview: event.overview,
             date: event.date,
             time: event.time,
+            timezone: event.timezone ?? "Asia/Kolkata",
+            startAtUTC: event.startAtUTC?.toISOString(),
             venue: event.venue,
             location: event.location,
             address: event.address ?? "",

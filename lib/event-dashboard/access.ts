@@ -17,6 +17,7 @@ import {
     normalizeEventMode,
     type NormalizedEventMode,
 } from "@/lib/event-dashboard/mode";
+import { resolveEventSchedule } from "@/lib/time";
 
 export type EventDashboardRole = "creator" | "co-organizer";
 
@@ -34,6 +35,9 @@ export interface EventDashboardContext {
     time: string;
     location: string;
     mode: string;
+    timezone?: string;
+    startAtUTC?: string;
+    isLegacySchedule: boolean;
     normalizedMode: NormalizedEventMode;
     role: EventDashboardRole;
     isCreator: boolean;
@@ -58,7 +62,11 @@ export async function getAccessibleDashboardEvents(): Promise<AccessibleDashboar
     }
 
     return Array.from(merged.values()).sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => {
+            const aStart = a.startAtUTC ? new Date(a.startAtUTC).getTime() : new Date(a.date).getTime();
+            const bStart = b.startAtUTC ? new Date(b.startAtUTC).getTime() : new Date(b.date).getTime();
+            return bStart - aStart;
+        }
     );
 }
 
@@ -82,7 +90,7 @@ export async function getEventDashboardContext(
     await connectToDatabase();
 
     const event = await Event.findById(eventId)
-        .select("title slug image category date time location mode creatorClerkId")
+        .select("title slug image category date time location mode timezone startAtUTC creatorClerkId")
         .lean<{
             _id: { toString(): string };
             title: string;
@@ -93,6 +101,8 @@ export async function getEventDashboardContext(
             time: string;
             location: string;
             mode: string;
+            timezone?: string;
+            startAtUTC?: Date;
             creatorClerkId: string;
         }>();
 
@@ -106,6 +116,13 @@ export async function getEventDashboardContext(
     if (!creator && !coOrganizer) return null;
 
     const normalizedMode = normalizeEventMode(event.mode);
+    const schedule = resolveEventSchedule({
+        date: event.date,
+        time: event.time,
+        timezone: event.timezone,
+        startAtUTC: event.startAtUTC,
+        mode: event.mode,
+    });
 
     return {
         eventId: event._id.toString(),
@@ -117,6 +134,9 @@ export async function getEventDashboardContext(
         time: event.time,
         location: event.location,
         mode: event.mode,
+        timezone: schedule.timezone,
+        startAtUTC: event.startAtUTC?.toISOString() ?? schedule.instant.toISOString(),
+        isLegacySchedule: schedule.isLegacy,
         normalizedMode,
         role: creator ? "creator" : "co-organizer",
         isCreator: creator,

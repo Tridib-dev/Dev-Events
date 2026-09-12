@@ -64,7 +64,10 @@ export async function GET(_request: Request, { params }: { params: RouteParams }
       return NextResponse.json({ message: "Unauthorized or room not found." }, { status: 403 });
     }
 
-    return NextResponse.json(discussion, { status: 200 });
+    return NextResponse.json(discussion, {
+      status: 200,
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   } catch (error) {
     console.error("[GET /api/rooms/[eventId]/discussion]", error);
     return NextResponse.json({ message: "Failed to load discussion." }, { status: 500 });

@@ -4,21 +4,7 @@ import { ActivityHeatmap, TrendChart } from "@/components/dashboard/analytics/Ch
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { EventAnalyticsDashboardData } from "@/lib/event-dashboard/analytics";
 import { edTokens } from "@/components/event-dashboard/theme/tokens";
-
-function formatDate(date: string) {
-    return new Date(date).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
-
-function formatTime(date: string) {
-    return new Date(date).toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
+import ViewerTimestamp from "@/components/ViewerTimestamp";
 
 export default function EventAnalyticsView({
     data,
@@ -83,6 +69,7 @@ export default function EventAnalyticsView({
                 <Card className="flex h-full min-h-0 flex-col overflow-hidden">
                     <CardHeader>
                         <CardTitle>Booking heatmap</CardTitle>
+                        <p className="text-[11px] text-slate-500">Calendar periods: {data.reportingTimezone}</p>
                     </CardHeader>
                     <CardContent className="flex min-h-0 flex-1 flex-col">
                         <ActivityHeatmap
@@ -140,7 +127,7 @@ export default function EventAnalyticsView({
                                             {item.kind === "payment" ? "Paid order" : item.label}
                                         </p>
                                         <p className="text-[11px] text-slate-500">
-                                            {formatDate(item.bookedAt)} · {formatTime(item.bookedAt)}
+                                            <ViewerTimestamp value={item.bookedAt} />
                                         </p>
                                     </div>
                                     <p className="text-[12px] font-semibold text-slate-800 sm:text-right">

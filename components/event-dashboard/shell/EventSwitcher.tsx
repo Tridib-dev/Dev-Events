@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, Check } from "lucide-react";
 import posthog from "posthog-js";
+import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 import {
     DropdownMenu,
@@ -16,17 +17,25 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useEventDashboard } from "@/components/event-dashboard/shell/EventDashboardProvider";
 import { edTokens } from "@/components/event-dashboard/theme/tokens";
+import { getEventDisplayTime } from "@/lib/time";
 
-function formatDate(date: string) {
-    return new Date(date).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
+function formatEventDate(event: {
+    date: string;
+    time: string;
+    timezone?: string;
+    startAtUTC?: string;
+    mode?: string;
+}, viewerTimezone?: string) {
+    return getEventDisplayTime(event, event.mode, viewerTimezone ?? event.timezone).primary;
 }
 
 export default function EventSwitcher({ compact = false }: { compact?: boolean }) {
     const { context, accessibleEvents } = useEventDashboard();
+    const viewerTimezone = useSyncExternalStore(
+        () => () => {},
+        () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+        () => undefined,
+    );
 
     return (
         <DropdownMenu>
@@ -50,7 +59,9 @@ export default function EventSwitcher({ compact = false }: { compact?: boolean }
                     <>
                         <div className="min-w-0">
                             <p className="truncate text-[13px] font-medium text-slate-900">{context.title}</p>
-                            <p className="truncate text-[11px] text-slate-500">{formatDate(context.date)}</p>
+                            <p className="truncate text-[11px] text-slate-500">
+                                {formatEventDate(context, viewerTimezone)}
+                            </p>
                         </div>
                         <ChevronDown size={14} className="ml-auto flex-shrink-0 text-slate-400" />
                     </>
@@ -94,7 +105,7 @@ export default function EventSwitcher({ compact = false }: { compact?: boolean }
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-[13px] font-medium">{event.title}</p>
                                         <p className="truncate text-[11px] text-slate-500">
-                                            {formatDate(event.date)} · {event.location}
+                                            {formatEventDate(event, viewerTimezone)} · {event.location}
                                         </p>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">

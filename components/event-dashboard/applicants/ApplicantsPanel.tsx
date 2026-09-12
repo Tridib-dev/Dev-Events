@@ -8,6 +8,7 @@ import PageSection from "@/components/event-dashboard/shared/PageSection";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApplicantFilter, EventApplicantsData } from "@/lib/event-dashboard/applicants";
+import ViewerTimestampParts from "@/components/ViewerTimestampParts";
 
 const FILTERS: { id: ApplicantFilter; label: string }[] = [
     { id: "all", label: "All" },
@@ -16,12 +17,7 @@ const FILTERS: { id: ApplicantFilter; label: string }[] = [
 ];
 
 function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    return iso;
 }
 
 export default function ApplicantsPanel({
@@ -149,10 +145,17 @@ export default function ApplicantsPanel({
                                 ),
                         },
                         {
-                            key: "bookedAt",
-                            header: "Registered",
+                            key: "bookedDate",
+                            header: "Date",
                             cell: (row) => (
-                                <span className="text-[12px] text-slate-500">{formatDate(row.bookedAt)}</span>
+                                <ViewerTimestampParts value={formatDate(row.bookedAt)} part="date" className="text-[12px] text-slate-500" />
+                            ),
+                        },
+                        {
+                            key: "bookedTime",
+                            header: "Time",
+                            cell: (row) => (
+                                <ViewerTimestampParts value={formatDate(row.bookedAt)} part="time" className="text-[12px] text-slate-500" />
                             ),
                         },
                     ]}

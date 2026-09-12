@@ -7,6 +7,7 @@ import { getEventSettings } from "@/lib/event-dashboard/settings.schema";
 import { getEventDashboardContext } from "@/lib/event-dashboard/access";
 import { getActionRailItems } from "@/lib/event-dashboard/navigation";
 import { getModeLabel } from "@/lib/event-dashboard/mode";
+import EventScheduleDisplay from "@/components/EventScheduleDisplay";
 
 export const metadata = { title: "Settings — Event Dashboard" };
 
@@ -35,7 +36,7 @@ function SettingsSection({
     );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
     return (
         <div>
             <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500">{label}</p>
@@ -72,6 +73,11 @@ export default async function EventSettingsPage({
                     </Link>
                 }
             />
+            {context.isLegacySchedule && (
+                <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-700">
+                    This event is using a legacy timezone fallback. Editing its schedule will establish a canonical timezone and UTC start instant.
+                </p>
+            )}
 
             <div className="grid gap-4 xl:grid-cols-2">
                 <SettingsSection title="General">
@@ -83,8 +89,19 @@ export default async function EventSettingsPage({
                 </SettingsSection>
 
                 <SettingsSection title="Schedule">
-                    <Field label="Date" value={settings.date} />
-                    <Field label="Time" value={settings.time} />
+                    <Field
+                        label="Schedule"
+                        value={
+                            <EventScheduleDisplay
+                                date={settings.date}
+                                time={settings.time}
+                                timezone={settings.timezone}
+                                startAtUTC={settings.startAtUTC}
+                                mode={settings.mode}
+                            />
+                        }
+                    />
+                    <Field label="Timezone" value={settings.timezone} />
                 </SettingsSection>
 
                 <SettingsSection title="Location">

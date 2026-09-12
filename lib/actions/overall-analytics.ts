@@ -10,7 +10,8 @@ import { paiseToRupees } from "@/lib/payments/money";
 import { Event } from "@/database/event.model";
 import { CoOrganizer } from "@/database/coOrganizer.model";
 import { User } from "@/database/User.model";
-import { getEventStartUTC } from "@/lib/time";
+import { DEFAULT_EVENT_TIMEZONE, getEventStartUTC, resolveEventSchedule } from "@/lib/time";
+import { DateTime } from "luxon";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,8 @@ export interface EventAnalyticsData {
         image: string;
         price: number;
         mode: string;
+        timezone: string;
+        startAtUTC?: string;
         agendaCount: number;
     } | null;
     totalBookings: number;
@@ -81,6 +84,7 @@ export interface EventAnalyticsData {
         checkedIn?: boolean;
         amount?: number;
     }[];
+    reportingTimezone: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,8 +93,16 @@ function monthKey(date: Date) {
     return date.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
 }
 
-function dayKey(date: Date) {
-    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+function monthKeyInZone(date: Date, timezone: string) {
+    return DateTime.fromJSDate(date, { zone: "utc" })
+        .setZone(timezone)
+        .toFormat("LLL yy");
+}
+
+function dayKeyInZone(date: Date, timezone: string) {
+    return DateTime.fromJSDate(date, { zone: "utc" })
+        .setZone(timezone)
+        .toFormat("d LLL");
 }
 
 function startOf(unit: "year" | "month") {
@@ -291,8 +303,8 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
         const now = new Date();
         const yearStart = startOf("year");
         const monthStart = startOf("month");
-        const thisMonth = myEvents.filter((e) => new Date(e.date) >= monthStart).length;
-        const thisYear = myEvents.filter((e) => new Date(e.date) >= yearStart).length;
+        const thisMonth = myEvents.filter((e) => getEventInstant(e) >= monthStart).length;
+        const thisYear = myEvents.filter((e) => getEventInstant(e) >= yearStart).length;
 
         const [allBookings, allOrders] = await Promise.all([
             Booking.find({ eventId: { $in: eventIds } }).lean() as Promise<any[]>,
@@ -373,7 +385,7 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
             monthlyMap[k] = 0;
         }
         myEvents.forEach((event) => {
-            const k = monthKey(new Date(event.date));
+            const k = monthKey(getEventInstant(event));
             if (k in monthlyMap) monthlyMap[k] += 1;
         });
         const monthlyActivity = last12Events.map((month) => ({ month, count: monthlyMap[month] }));
@@ -422,6 +434,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
         dailyBookingTrend: [],
         weekdayHeatmap: [],
         recentActivity: [],
+        reportingTimezone: DEFAULT_EVENT_TIMEZONE,
     };
 
     try {
@@ -456,18 +469,25 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
             ? Math.round(totalRevenue / totalPaidOrders)
             : 0;
 
+        const reportingTimezone = resolveEventSchedule({
+            date: event.date,
+            time: event.time,
+            timezone: event.timezone,
+            startAtUTC: event.startAtUTC,
+            mode: event.mode,
+        }).timezone;
         const timelineMap: Record<string, { bookings: number; checkIns: number; revenue: number }> = {};
         const last12: string[] = [];
-        const now = new Date();
+        const now = DateTime.now().setZone(reportingTimezone);
         for (let i = 11; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const key = monthKey(d);
+            const d = now.startOf("month").minus({ months: i });
+            const key = monthKeyInZone(d.toJSDate(), reportingTimezone);
             last12.push(key);
             timelineMap[key] = { bookings: 0, checkIns: 0, revenue: 0 };
         }
 
         bookings.forEach((booking) => {
-            const key = monthKey(new Date(booking.createdAt));
+            const key = monthKeyInZone(new Date(booking.createdAt), reportingTimezone);
             if (timelineMap[key]) {
                 timelineMap[key].bookings += 1;
                 if (booking.checkedIn) timelineMap[key].checkIns += 1;
@@ -475,7 +495,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
         });
 
         orders.forEach((order) => {
-            const key = monthKey(new Date(order.createdAt));
+            const key = monthKeyInZone(new Date(order.createdAt), reportingTimezone);
             if (timelineMap[key]) {
                 timelineMap[key].bookings += 1;
                 timelineMap[key].revenue += paiseToRupees(order.amount ?? 0);
@@ -490,15 +510,14 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
         const dailyTimelineMap: Record<string, { bookings: number; checkIns: number; revenue: number }> = {};
         const last14: string[] = [];
         for (let i = 13; i >= 0; i -= 1) {
-            const d = new Date(now);
-            d.setDate(now.getDate() - i);
-            const key = dayKey(d);
+            const d = now.startOf("day").minus({ days: i });
+            const key = dayKeyInZone(d.toJSDate(), reportingTimezone);
             last14.push(key);
             dailyTimelineMap[key] = { bookings: 0, checkIns: 0, revenue: 0 };
         }
 
         bookings.forEach((booking) => {
-            const key = dayKey(new Date(booking.createdAt));
+            const key = dayKeyInZone(new Date(booking.createdAt), reportingTimezone);
             if (dailyTimelineMap[key]) {
                 dailyTimelineMap[key].bookings += 1;
                 if (booking.checkedIn) dailyTimelineMap[key].checkIns += 1;
@@ -506,7 +525,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
         });
 
         orders.forEach((order) => {
-            const key = dayKey(new Date(order.createdAt));
+            const key = dayKeyInZone(new Date(order.createdAt), reportingTimezone);
             if (dailyTimelineMap[key]) {
                 dailyTimelineMap[key].bookings += 1;
                 dailyTimelineMap[key].revenue += paiseToRupees(order.amount ?? 0);
@@ -525,7 +544,9 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
         }, {});
 
         [...bookings, ...orders].forEach((entry) => {
-            const day = weekdayNames[new Date(entry.createdAt).getDay()];
+            const day = DateTime.fromJSDate(new Date(entry.createdAt), { zone: "utc" })
+                .setZone(reportingTimezone)
+                .toFormat("ccc");
             weekdayMap[day] += 1;
         });
 
@@ -565,6 +586,15 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
                 image: event.image,
                 price: event.price ?? 0,
                 mode: event.mode,
+                timezone: reportingTimezone,
+                startAtUTC: event.startAtUTC
+                    ? new Date(event.startAtUTC).toISOString()
+                    : resolveEventSchedule({
+                        date: event.date,
+                        time: event.time,
+                        timezone: event.timezone,
+                        mode: event.mode,
+                    }).instant.toISOString(),
                 agendaCount: Array.isArray(event.agenda) ? event.agenda.length : 0,
             },
             totalBookings,
@@ -580,6 +610,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
             dailyBookingTrend,
             weekdayHeatmap,
             recentActivity,
+            reportingTimezone,
         };
     } catch (err) {
         console.error("[getEventAnalytics]", err);

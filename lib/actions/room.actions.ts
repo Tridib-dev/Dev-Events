@@ -12,6 +12,7 @@ import { Order } from "@/database/Order.model";
 import { Booking } from "@/database/booking.model";
 import { getServerStreamClient } from "../stream/server-client";
 import { autoCheckInOnRoomJoin } from "@/lib/actions/gate.actions";
+import { resolveEventSchedule } from "@/lib/time";
 
 export type RoomPhase = "not_configured" | "locked" | "lobby" | "live" | "ended";
 
@@ -213,7 +214,10 @@ export async function joinRoom(eventId: string): Promise<JoinRoomResult> {
 
     const canGetVideoToken = isOrganizerTier || phase === "live";
     if (!canGetVideoToken && phase === "locked") {
-      return { status: "denied", reason: "not_started_yet", phase };
+      // Keep the resolved role in the response even though the attendee is
+      // not allowed to receive a video token before the lobby opens. The
+      // client uses this to show attendee-only waiting UI safely.
+      return { status: "denied", reason: "not_started_yet", phase, role: initialRole };
     }
 
     // Upsert membership, then READ BACK what's actually persisted —
@@ -340,30 +344,43 @@ export async function leaveRoom(eventId: string): Promise<{ success: boolean }> 
 }
 
 
-// add to room.actions.ts
-
-import { getEventStartUTC } from "@/lib/time";
-
 const DEFAULT_ROOM_DURATION_MS = 2 * 60 * 60 * 1000; // 2h — no explicit end-time field on Event yet
-
-// event.date is stored as a full ISO string via normalizeDateToIso (e.g. "2027-04-10T00:00:00.000Z").
-// event.time is stored as 24h "HH:mm" via normalizeTime (e.g. "08:30"), confirmed.
-// The date's *time-of-day* portion is meaningless (always midnight) — we only want its
-// calendar date, then apply the real time from `time` on top of it, respecting the
-// event's home timezone. Uses shared getEventStartUTC so countdowns are correct
-// for all viewers regardless of their own timezone.
-function parseEventStart(isoDate: string, time: string, timezone?: string): Date | null {
-  const start = getEventStartUTC(isoDate, time, timezone);
-  return start ? new Date(start.getTime()) : null;
-}
 
 export async function ensureRoomForEvent(eventId: string): Promise<RoomPublicMeta | null> {
   try {
     if (!isValidObjectId(eventId)) return null;
     await connectToDatabase();
 
+    const event = await Event.findById(eventId).select("date time timezone startAtUTC").lean();
+    if (!event) return null;
+
+    const eventSchedule = resolveEventSchedule({
+      date: String(event.date),
+      time: String(event.time),
+      timezone: event.timezone,
+      startAtUTC: event.startAtUTC,
+    });
+    const canonicalStart = eventSchedule.instant;
+    const canonicalEnd = new Date(canonicalStart.getTime() + DEFAULT_ROOM_DURATION_MS);
+
     const existing = await Room.findOne({ eventId }).select("scheduledStart scheduledEnd status").lean();
     if (existing) {
+      // A room is created once, but the event schedule may be edited later.
+      // Reconcile only scheduled rooms; never move a live, ended, or cancelled
+      // room while people may be relying on its current lifecycle state.
+      const scheduleChanged = Math.abs(existing.scheduledStart.getTime() - canonicalStart.getTime()) > 1000;
+      if (scheduleChanged && existing.status === "scheduled") {
+        await Room.updateOne(
+          { eventId, status: "scheduled" },
+          { $set: { scheduledStart: canonicalStart, scheduledEnd: canonicalEnd } }
+        );
+        return {
+          phase: getEffectivePhase({ status: "scheduled", scheduledStart: canonicalStart }, new Date()),
+          scheduledStart: canonicalStart.toISOString(),
+          scheduledEnd: canonicalEnd.toISOString(),
+        };
+      }
+
       return {
         phase: getEffectivePhase(existing, new Date()),
         scheduledStart: existing.scheduledStart.toISOString(),
@@ -374,15 +391,8 @@ export async function ensureRoomForEvent(eventId: string): Promise<RoomPublicMet
     // No room yet — only an organizer/co-organizer visiting the page can trigger creation.
     if (!(await isGateAuthorized(eventId))) return null;
 
-    const event = await Event.findById(eventId).select("date time timezone").lean();
-    if (!event) return null;
-
-    const scheduledStart = parseEventStart(event.date, event.time, event.timezone);
-    if (!scheduledStart) {
-      console.error("[ensureRoomForEvent] could not parse event date/time", { eventId, date: event.date, time: event.time });
-      return null;
-    }
-    const scheduledEnd = new Date(scheduledStart.getTime() + DEFAULT_ROOM_DURATION_MS);
+    const scheduledStart = canonicalStart;
+    const scheduledEnd = canonicalEnd;
 
     const created = await createRoom(eventId, scheduledStart, scheduledEnd);
     if (!created.success) return null;
@@ -397,8 +407,3 @@ export async function ensureRoomForEvent(eventId: string): Promise<RoomPublicMet
     return null;
   }
 }
-
-
-
-// parseEventStart in room.actions.ts — uses getEventStartUTC to convert
-// event.date/event/time + event.timezone into a proper UTC instant.

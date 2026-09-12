@@ -1,5 +1,25 @@
 import { DateTime } from "luxon";
 
+export const DEFAULT_EVENT_TIMEZONE = "Asia/Kolkata";
+
+export interface EventScheduleInput {
+  date: string;
+  time: string;
+  timezone?: string;
+  startAtUTC?: string | Date;
+  mode?: string;
+}
+
+export interface ResolvedEventSchedule {
+  instant: Date;
+  timezone: string;
+  isLegacy: boolean;
+}
+
+export function isValidEventTimezone(timezone?: string): boolean {
+  return Boolean(timezone && DateTime.local().setZone(timezone).isValid);
+}
+
 /**
  * Combines an event's calendar date, wall-clock time, and IANA timezone
  * into the true UTC instant. This is the ONLY place this composition
@@ -11,7 +31,7 @@ export function getEventStartUTC(
   time: string,
   timezone?: string
 ): Date {
-  const tz = timezone || "Asia/Kolkata";
+  const tz = timezone || DEFAULT_EVENT_TIMEZONE;
   const [datePart] = date.split("T");
 
   const dt = DateTime.fromISO(`${datePart}T${time}`, { zone: tz });
@@ -23,6 +43,38 @@ export function getEventStartUTC(
   }
 
   return dt.toUTC().toJSDate();
+}
+
+/**
+ * Resolves the one absolute instant used by event state and display code.
+ * Existing records without the new fields remain readable and are marked
+ * legacy so callers can surface/observe the fallback without blocking them.
+ */
+export function resolveEventSchedule(event: EventScheduleInput): ResolvedEventSchedule {
+  const timezone = isValidEventTimezone(event.timezone)
+    ? event.timezone!
+    : DEFAULT_EVENT_TIMEZONE;
+
+  if (event.startAtUTC) {
+    const instant = new Date(event.startAtUTC);
+    if (!Number.isNaN(instant.getTime())) {
+      return { instant, timezone, isLegacy: !event.timezone || timezone !== event.timezone };
+    }
+  }
+
+  try {
+    return {
+      instant: getEventStartUTC(event.date, event.time, timezone),
+      timezone,
+      isLegacy: true,
+    };
+  } catch {
+    const fallback = new Date(event.date);
+    if (!Number.isNaN(fallback.getTime())) {
+      return { instant: fallback, timezone, isLegacy: true };
+    }
+    return { instant: new Date(0), timezone, isLegacy: true };
+  }
 }
 
 export function eventCountdown(utcInstant: Date): {
@@ -126,19 +178,35 @@ function normalizeEventModeInline(raw: string | undefined | null): "online" | "o
  * component should call.
  */
 export function getEventDisplayTime(
-  event: {
-    date: string;
-    time: string;
-    timezone?: string;
-    startAtUTC?: string | Date;
-    mode?: string;
-  },
-  mode?: string
+  event: EventScheduleInput,
+  mode?: string,
+  viewerTimezone?: string
 ): { primary: string; secondary?: string } {
-  const instant = event.startAtUTC
-    ? new Date(event.startAtUTC)
-    : getEventStartUTC(event.date, event.time, event.timezone);
-
+  const { instant, timezone } = resolveEventSchedule(event);
   const effectiveMode = mode ?? event.mode;
-  return displayEventTime(instant, event.timezone || "Asia/Kolkata", undefined, effectiveMode);
+  return displayEventTime(instant, timezone, viewerTimezone, effectiveMode);
+}
+
+/** Formats an absolute audit timestamp in the current viewer's local zone. */
+export function formatViewerTimestamp(value: string | Date, includeDate = true): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return new Intl.DateTimeFormat(undefined, {
+    ...(includeDate ? { day: "numeric", month: "short", year: "numeric" } : {}),
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+}
+
+/** Returns a stable calendar key in an explicit IANA reporting zone. */
+export function reportingDateKey(value: Date | string, timezone: string): string {
+  const date = value instanceof Date ? value : new Date(value);
+  return DateTime.fromJSDate(date, { zone: "utc" }).setZone(timezone).toISODate() ?? "invalid";
+}
+
+export function formatReportingDateKey(key: string, timezone: string): string {
+  const date = DateTime.fromISO(key, { zone: timezone });
+  return date.isValid ? date.toFormat("d LLL") : "—";
 }

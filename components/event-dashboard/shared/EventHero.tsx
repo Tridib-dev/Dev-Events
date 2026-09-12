@@ -1,62 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { getEventStartUTC } from "@/lib/time";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { eventCountdown, displayEventTime, resolveEventSchedule } from "@/lib/time";
 import { Badge } from "@/components/ui/badge";
 import { edTokens } from "@/components/event-dashboard/theme/tokens";
 
-function parseEventDate(date: string, time: string, timezone?: string) {
-    const tz = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const datePart = date.trim().split("T")[0];
-    const hasDatePart = /^\d{4}-\d{2}-\d{2}$/.test(datePart);
-    const hasTimePart = /^\d{2}:\d{2}$/.test(time);
-
-    if (hasDatePart) {
-        const startDate = getEventStartUTC(date, time, tz);
-        const displayDate = Number.isNaN(startDate.getTime()) ? null : startDate;
-
-        return {
-            displayDate,
-            startDate,
-        };
-    }
-
-    const fallback = new Date(date);
-    const displayDate = Number.isNaN(fallback.getTime()) ? null : fallback;
-
-    return {
-        displayDate,
-        startDate: Number.isNaN(fallback.getTime()) ? null : fallback,
-    };
-}
+const subscribe = () => () => {};
 
 function formatCountdown(target: Date | null) {
-    if (!target) return { label: "Date not set", parts: null };
+    if (!target || Number.isNaN(target.getTime())) return { label: "Date not set", parts: null };
+    if (target.getTime() <= Date.now()) return { label: "Event started", parts: null };
 
-    const diff = target.getTime() - Date.now();
-    if (diff <= 0) return { label: "Event started", parts: null };
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((diff / (1000 * 60)) % 60);
-    const seconds = Math.floor((diff / 1000) % 60);
+    const parts = eventCountdown(target);
+    if (!parts.days && !parts.hours && !parts.minutes && !parts.seconds) {
+        return { label: null, parts };
+    }
 
     return {
         label: null,
-        parts: { days, hours, minutes, seconds },
+        parts,
     };
-}
-
-function formatEventDate(date: Date | null) {
-    if (!date) return "Date not set";
-
-    return new Intl.DateTimeFormat("en-IN", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone: "UTC",
-    }).format(date);
 }
 
 export default function EventHero({
@@ -64,13 +27,32 @@ export default function EventHero({
     category,
     date,
     time,
+    timezone,
+    startAtUTC,
+    mode,
 }: {
     title: string;
     category: string;
     date: string;
     time: string;
+    timezone?: string;
+    startAtUTC?: string | Date;
+    mode?: string;
 }) {
-    const { displayDate, startDate } = useMemo(() => parseEventDate(date, time), [date, time]);
+    const schedule = useMemo(
+        () => resolveEventSchedule({ date, time, timezone, startAtUTC, mode }),
+        [date, time, timezone, startAtUTC, mode]
+    );
+    const viewerTimezone = useSyncExternalStore(
+        subscribe,
+        () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+        () => undefined,
+    );
+    const display = useMemo(
+        () => displayEventTime(schedule.instant, schedule.timezone, viewerTimezone ?? schedule.timezone, mode),
+        [schedule.instant, schedule.timezone, mode, viewerTimezone]
+    );
+    const startDate = schedule.instant;
     const [countdown, setCountdown] = useState<ReturnType<typeof formatCountdown>>(() => formatCountdown(startDate));
 
     useEffect(() => {
@@ -99,10 +81,11 @@ export default function EventHero({
                 </Badge>
 
                 <p className="mt-4 text-[14px] text-slate-500 sm:text-[15px]">
-                    <span>{formatEventDate(displayDate)}</span>
-                    {time ? <span className="mx-2 text-slate-300">·</span> : null}
-                    {time ? <span>{time}</span> : null}
+                    <span>{display.primary}</span>
                 </p>
+                {display.secondary && (
+                    <p className="mt-1 text-[12px] text-slate-400">{display.secondary}</p>
+                )}
 
                 <div className="mt-6 grid w-full max-w-[520px] grid-cols-4 gap-2 sm:gap-3">
                     {!countdown || countdown.label ? (

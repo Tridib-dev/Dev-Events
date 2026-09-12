@@ -23,6 +23,7 @@ export interface RoomGateProps {
   initialPhase: RoomPhase;
   scheduledStart: string;
   scheduledEnd: string;
+  viewerIsOrganizer: boolean;
 }
 
 export default function RoomGate({
@@ -32,11 +33,16 @@ export default function RoomGate({
   bannerUrl,
   initialPhase,
   scheduledStart,
+  viewerIsOrganizer,
 }: RoomGateProps) {
   const client = useStreamVideoClient(); // comes from <StreamVideoProvider> context — no second client
   const router = useRouter();
   const { phase, joinResult, refetch } = useRoomPhase(eventId, initialPhase);
   const isOrganizerTier = joinResult?.role === "organizer" || joinResult?.role === "co-organizer";
+  // Never infer attendee status from a missing/failed organizer check. The
+  // countdown is shown only after the room join endpoint explicitly resolves
+  // this viewer as an attendee.
+  const showAttendeeCountdown = !viewerIsOrganizer && joinResult?.role === "attendee";
 
   // `call` exists as soon as we've created the Call object — this happens
   // well before it's actually joined, so PreJoinScreen can show a device
@@ -167,7 +173,12 @@ export default function RoomGate({
   if (phase === "locked") {
     screen = (
       <>
-        <LockedScreen eventTitle={eventTitle} bannerUrl={bannerUrl} lobbyOpensAt={lobbyOpensAt} />
+        <LockedScreen
+          eventTitle={eventTitle}
+          bannerUrl={bannerUrl}
+          lobbyOpensAt={lobbyOpensAt}
+          showCountdown={showAttendeeCountdown}
+        />
         <PreMeetingUpdates eventId={eventId} canModerate={isOrganizerTier} />
       </>
     );
@@ -182,6 +193,7 @@ export default function RoomGate({
         
         {refetch}
         canModerate={isOrganizerTier}
+        showCountdown={showAttendeeCountdown}
       />
     );
   } else if (phase === "live") {
@@ -205,15 +217,18 @@ export default function RoomGate({
       );
     } else if (hasJoined && call) {
       screen = (
-        <LiveRoomScreen
-          call={call}
-          onLeave={handleLeave}
-          eventId={eventId}
-          showDeviceControls={isOrganizerTier}
-          canModerate={isOrganizerTier}
-          eventTitle={eventTitle}
-          bannerUrl={bannerUrl}
-        />
+        <>
+          <LiveRoomScreen
+            call={call}
+            onLeave={handleLeave}
+            eventId={eventId}
+            showDeviceControls={isOrganizerTier}
+            canModerate={isOrganizerTier}
+            eventTitle={eventTitle}
+            bannerUrl={bannerUrl}
+          />
+          <PreMeetingUpdates eventId={eventId} canModerate={isOrganizerTier} />
+        </>
       );
     } else if (call) {
       screen = (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { removeCoOrganizer } from "@/lib/actions/gate.actions";
 import type { EventOrganizersData } from "@/lib/event-dashboard/organizers";
 import { AddCoOrganizerModal } from "@/components/profileCard";
+import ViewerTimestampParts from "@/components/ViewerTimestampParts";
 
 type TabId = "all" | "active" | "pending" | "declined";
 
@@ -20,18 +21,9 @@ type CommitteeRow = {
     name: string;
     photo: string;
     status: "active" | "pending" | "declined";
-    sinceLabel: string;
     sinceValue: string;
     email?: string;
 };
-
-function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
 
 export default function OrganizersPanel({
     eventId,
@@ -59,14 +51,13 @@ export default function OrganizersPanel({
         });
     }
 
-    const allRows: CommitteeRow[] = [
+    const allRows = useMemo<CommitteeRow[]>(() => [
         ...data.active.map((row) => ({
             clerkId: row.clerkId,
             name: row.name,
             photo: row.photo,
             email: row.email,
             status: "active" as const,
-            sinceLabel: "Added",
             sinceValue: row.addedAt,
         })),
         ...data.pending.map((row) => ({
@@ -74,7 +65,6 @@ export default function OrganizersPanel({
             name: row.name,
             photo: row.photo,
             status: "pending" as const,
-            sinceLabel: "Invited",
             sinceValue: row.invitedAt,
         })),
         ...data.denied.map((row) => ({
@@ -82,10 +72,33 @@ export default function OrganizersPanel({
             name: row.name,
             photo: row.photo,
             status: "declined" as const,
-            sinceLabel: "Responded",
             sinceValue: row.respondedAt ?? row.invitedAt,
         })),
-    ];
+    ], [data.active, data.pending, data.denied]);
+
+    const [query, setQuery] = useState("");
+    const filteredRows = useMemo(() => {
+        const normalizedQuery = query.trim().toLowerCase();
+        if (!normalizedQuery) return allRows;
+        return allRows.filter((row) =>
+            [row.name, row.email ?? "", row.status].some((value) =>
+                value.toLowerCase().includes(normalizedQuery)
+            )
+        );
+    }, [allRows, query]);
+
+    const filteredActive = useMemo(
+        () => filteredRows.filter((row) => row.status === "active"),
+        [filteredRows]
+    );
+    const filteredPending = useMemo(
+        () => filteredRows.filter((row) => row.status === "pending"),
+        [filteredRows]
+    );
+    const filteredDeclined = useMemo(
+        () => filteredRows.filter((row) => row.status === "declined"),
+        [filteredRows]
+    );
 
     const tabs: { id: TabId; label: string; count: number }[] = [
         { id: "all", label: "All", count: allRows.length },
@@ -123,45 +136,37 @@ export default function OrganizersPanel({
                                     + Add co-organizer
                                 </button>
                             )}
-                            <Tabs
-                                value={tab}
-                                onValueChange={(value) => setTab(value as TabId)}
-                                className="w-fit self-end"
-                            >
-                                <TabsList className="inline-flex h-8 w-fit items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
-                                    {tabs.map((item) => (
-                                        <TabsTrigger
-                                            key={item.id}
-                                            value={item.id}
-                                            className="h-6 flex-none justify-center rounded-md px-2 text-[11px] leading-none text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2.5"
-                                        >
-                                            {item.label} ({item.count})
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
-                            </Tabs>
                         </div>
                     </>
                 }
             >
                 <div className="space-y-6 sm:space-y-0">
-                    <Tabs
-                        value={tab}
-                        onValueChange={(value) => setTab(value as TabId)}
-                        className="w-fit sm:hidden"
-                    >
-                        <TabsList className="inline-flex h-8 w-fit items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
-                            {tabs.map((item) => (
-                                <TabsTrigger
-                                    key={item.id}
-                                    value={item.id}
-                                    className="h-6 flex-none justify-center rounded-md px-2 text-[11px] leading-none text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2.5"
-                                >
-                                    {item.label} ({item.count})
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
+                    <div className="mb-4 flex min-w-0 items-center gap-2 sm:gap-3">
+                        <input
+                            value={query}
+                            onChange={(event) => setQuery(event.target.value)}
+                            placeholder="Search by name or email…"
+                            aria-label="Search organizers"
+                            className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                        />
+                        <Tabs
+                            value={tab}
+                            onValueChange={(value) => setTab(value as TabId)}
+                            className="min-w-0 flex-[2]"
+                        >
+                            <TabsList className="grid h-10 w-full grid-cols-4 items-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
+                                {tabs.map((item) => (
+                                    <TabsTrigger
+                                        key={item.id}
+                                        value={item.id}
+                                        className="h-8 min-w-0 rounded-md px-0.5 text-[8px] leading-none text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2 sm:text-[11px]"
+                                    >
+                                        {item.label} ({item.count})
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        </Tabs>
+                    </div>
 
                     {tab === "all" && (
                     <>
@@ -203,16 +208,22 @@ export default function OrganizersPanel({
                                             ),
                                     },
                                     {
-                                        key: "since",
-                                        header: "Since",
+                                        key: "sinceDate",
+                                        header: "Date",
                                         cell: (row: CommitteeRow) => (
-                                            <span className="text-[12px] text-slate-500">
-                                                {row.sinceLabel} {formatDate(row.sinceValue)}
-                                            </span>
+                                            <ViewerTimestampParts value={row.sinceValue} part="date" className="text-[12px] text-slate-500" />
+                                        ),
+                                    },
+                                    {
+                                        key: "sinceTime",
+                                        header: "Time",
+                                        cell: (row: CommitteeRow) => (
+                                            <ViewerTimestampParts value={row.sinceValue} part="time" className="text-[12px] text-slate-500" />
                                         ),
                                     },
                                 ]}
-                                rows={allRows}
+                            rows={filteredRows}
+                            emptyMessage="No organizers match your search."
                             />
                         )}
                     </>
@@ -246,10 +257,17 @@ export default function OrganizersPanel({
                                         ),
                                     },
                                     {
-                                        key: "addedAt",
-                                        header: "Added",
+                                        key: "addedDate",
+                                        header: "Date",
                                         cell: (row) => (
-                                            <span className="text-[12px] text-slate-500">{formatDate(row.addedAt)}</span>
+                                            <ViewerTimestampParts value={row.sinceValue} part="date" className="text-[12px] text-slate-500" />
+                                        ),
+                                    },
+                                    {
+                                        key: "addedTime",
+                                        header: "Time",
+                                        cell: (row) => (
+                                            <ViewerTimestampParts value={row.sinceValue} part="time" className="text-[12px] text-slate-500" />
                                         ),
                                     },
                                     ...(isCreator
@@ -257,7 +275,7 @@ export default function OrganizersPanel({
                                               {
                                                   key: "actions",
                                                   header: "",
-                                                  cell: (row: (typeof data.active)[0]) => (
+                                                  cell: (row: CommitteeRow) => (
                                                       <button
                                                           type="button"
                                                           disabled={pending}
@@ -271,7 +289,8 @@ export default function OrganizersPanel({
                                           ]
                                         : []),
                                 ]}
-                                rows={data.active}
+                                rows={filteredActive}
+                                emptyMessage="No organizers match your search."
                             />
                         )}
                     </>
@@ -303,15 +322,22 @@ export default function OrganizersPanel({
                                 cell: () => <Badge variant="secondary">Pending</Badge>,
                             },
                             {
-                                key: "invitedAt",
-                                header: "Invited",
+                                key: "invitedDate",
+                                header: "Date",
                                 cell: (row) => (
-                                    <span className="text-[12px] text-slate-500">{formatDate(row.invitedAt)}</span>
+                                    <ViewerTimestampParts value={row.sinceValue} part="date" className="text-[12px] text-slate-500" />
+                                ),
+                            },
+                            {
+                                key: "invitedTime",
+                                header: "Time",
+                                cell: (row) => (
+                                    <ViewerTimestampParts value={row.sinceValue} part="time" className="text-[12px] text-slate-500" />
                                 ),
                             },
                         ]}
-                        rows={data.pending}
-                        emptyMessage="No pending invites."
+                        rows={filteredPending}
+                        emptyMessage={query ? "No pending invites match your search." : "No pending invites."}
                     />
                 )}
 
@@ -331,17 +357,22 @@ export default function OrganizersPanel({
                                 cell: () => <Badge variant="destructive">Declined</Badge>,
                             },
                             {
-                                key: "respondedAt",
-                                header: "Responded",
+                                key: "respondedDate",
+                                header: "Date",
                                 cell: (row) => (
-                                    <span className="text-[12px] text-slate-500">
-                                        {row.respondedAt ? formatDate(row.respondedAt) : "—"}
-                                    </span>
+                                    <ViewerTimestampParts value={row.sinceValue} part="date" className="text-[12px] text-slate-500" />
+                                ),
+                            },
+                            {
+                                key: "respondedTime",
+                                header: "Time",
+                                cell: (row) => (
+                                    <ViewerTimestampParts value={row.sinceValue} part="time" className="text-[12px] text-slate-500" />
                                 ),
                             },
                         ]}
-                        rows={data.denied}
-                        emptyMessage="No declined invites."
+                        rows={filteredDeclined}
+                        emptyMessage={query ? "No declined invites match your search." : "No declined invites."}
                     />
                     )}
                 </div>

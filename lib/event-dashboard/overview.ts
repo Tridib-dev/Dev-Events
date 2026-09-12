@@ -10,9 +10,17 @@ import { isGateAuthorized } from "@/lib/actions/gate.actions";
 import { paiseToRupees } from "@/lib/payments/money";
 import { getCoOrganizerCount, getEventActivityFeed } from "@/lib/event-dashboard/activity";
 import { normalizeEventMode } from "@/lib/event-dashboard/mode";
+import {
+    DEFAULT_EVENT_TIMEZONE,
+    formatReportingDateKey,
+    reportingDateKey,
+    resolveEventSchedule,
+} from "@/lib/time";
+import { DateTime } from "luxon";
 
 export interface DailyApplicationPoint {
     day: string;
+    dateKey?: string;
     applications: number;
 }
 
@@ -32,6 +40,9 @@ export interface EventOverviewData {
         time: string;
         image: string;
         mode: string;
+        timezone: string;
+        startAtUTC?: string;
+        isLegacySchedule: boolean;
         normalizedMode: ReturnType<typeof normalizeEventMode>;
     } | null;
     applicantCount: number;
@@ -43,10 +54,6 @@ export interface EventOverviewData {
     dailyApplications: DailyApplicationPoint[];
     keyMetrics: EventOverviewMetric[];
     recentActivity: Awaited<ReturnType<typeof getEventActivityFeed>>["items"];
-}
-
-function dayKey(date: Date): string {
-    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
 function computeAnalyticsScore(input: {
@@ -77,27 +84,26 @@ function computeAnalyticsScore(input: {
 
 function buildDailySeries(
     createdAt: Date,
-    eventDate: Date,
-    entries: { createdAt: Date | string }[]
+    eventInstant: Date,
+    entries: { createdAt: Date | string }[],
+    timezone: string
 ): DailyApplicationPoint[] {
-    const start = new Date(createdAt);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(eventDate);
-    end.setHours(23, 59, 59, 999);
-    const today = new Date();
-    const cappedEnd = end.getTime() > today.getTime() ? today : end;
+    const start = DateTime.fromJSDate(new Date(createdAt), { zone: "utc" }).setZone(timezone).startOf("day");
+    const eventEnd = DateTime.fromJSDate(eventInstant, { zone: "utc" }).setZone(timezone).endOf("day");
+    const now = DateTime.now().setZone(timezone);
+    const cappedEnd = eventEnd < now ? eventEnd : now;
 
     const map = new Map<string, number>();
     const points: DailyApplicationPoint[] = [];
 
-    for (let cursor = new Date(start); cursor <= cappedEnd; cursor.setDate(cursor.getDate() + 1)) {
-        const key = dayKey(cursor);
+    for (let cursor = start; cursor <= cappedEnd; cursor = cursor.plus({ days: 1 })) {
+        const key = cursor.toISODate() ?? "invalid";
         map.set(key, 0);
-        points.push({ day: key, applications: 0 });
+        points.push({ dateKey: key, day: formatReportingDateKey(key, timezone), applications: 0 });
     }
 
     for (const entry of entries) {
-        const key = dayKey(new Date(entry.createdAt));
+        const key = reportingDateKey(entry.createdAt, timezone);
         if (map.has(key)) {
             map.set(key, (map.get(key) ?? 0) + 1);
         }
@@ -105,13 +111,15 @@ function buildDailySeries(
 
     return points.map((point) => ({
         day: point.day,
-        applications: map.get(point.day) ?? 0,
+        // `map` is keyed by the stable ISO date (`dateKey`), while `day` is
+        // the localized display label used by the chart axis.
+        applications: map.get(point.dateKey ?? point.day) ?? 0,
     }));
 }
 
 export const getEventOverview = cache(async (eventId: string): Promise<EventOverviewData> => {
     const empty: EventOverviewData = {
-        event: null,
+    event: null,
         applicantCount: 0,
         analyticsScore: 0,
         coOrganizerCount: 0,
@@ -141,6 +149,8 @@ export const getEventOverview = cache(async (eventId: string): Promise<EventOver
         mode: string;
         price?: number;
         createdAt: Date;
+        timezone?: string;
+        startAtUTC?: Date;
     }>();
 
     if (!event) return empty;
@@ -159,12 +169,20 @@ export const getEventOverview = cache(async (eventId: string): Promise<EventOver
     const totalRevenuePaise = orders.reduce((sum, order) => sum + (order.amount ?? 0), 0);
     const totalRevenue = paiseToRupees(totalRevenuePaise);
 
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const last7Start = new Date(todayStart);
-    last7Start.setDate(last7Start.getDate() - 7);
-    const prior7Start = new Date(last7Start);
-    prior7Start.setDate(prior7Start.getDate() - 7);
+    const schedule = resolveEventSchedule({
+        date: event.date,
+        time: event.time,
+        timezone: event.timezone,
+        startAtUTC: event.startAtUTC,
+        mode: event.mode,
+    });
+    const reportingTimezone = schedule.timezone || DEFAULT_EVENT_TIMEZONE;
+
+    const todayStart = DateTime.now().setZone(reportingTimezone).startOf("day").toUTC().toJSDate();
+    const last7Start = DateTime.fromJSDate(todayStart, { zone: "utc" })
+        .setZone(reportingTimezone).minus({ days: 7 }).toUTC().toJSDate();
+    const prior7Start = DateTime.fromJSDate(last7Start, { zone: "utc" })
+        .setZone(reportingTimezone).minus({ days: 7 }).toUTC().toJSDate();
 
     const allEntries = [...bookings, ...orders];
     const todaySignups = allEntries.filter((e) => new Date(e.createdAt) >= todayStart).length;
@@ -188,8 +206,9 @@ export const getEventOverview = cache(async (eventId: string): Promise<EventOver
 
     const dailyApplications = buildDailySeries(
         event.createdAt ?? new Date(event.date),
-        new Date(event.date),
-        allEntries
+        schedule.instant,
+        allEntries,
+        reportingTimezone
     );
 
     const normalizedMode = normalizeEventMode(event.mode);
@@ -204,6 +223,9 @@ export const getEventOverview = cache(async (eventId: string): Promise<EventOver
             time: event.time,
             image: event.image,
             mode: event.mode,
+            timezone: reportingTimezone,
+            startAtUTC: event.startAtUTC?.toISOString() ?? schedule.instant.toISOString(),
+            isLegacySchedule: schedule.isLegacy,
             normalizedMode,
         },
         applicantCount: totalApplicants,

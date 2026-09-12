@@ -10,6 +10,7 @@ import { Event } from "@/database/event.model";
 import { User } from "@/database/User.model";
 import { isEventCreator } from "@/lib/actions/event.actions";
 import { sendCoOrganizerInvites } from "@/lib/co-organizer-invites";
+import { getEventStartUTC } from "@/lib/time";
 
 export type TicketType = "booking" | "order";
 
@@ -129,35 +130,36 @@ function toIso(value?: Date | string | null): string | undefined {
     return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
-function parseEventStart(eventDate?: string, eventTime?: string): Date | null {
-    if (!eventDate) return null;
-
-    const start = new Date(eventDate);
-    if (Number.isNaN(start.getTime())) return null;
-
-    if (eventTime) {
-        const [hourPart, minutePart] = eventTime.split(":");
-        const hour = Number(hourPart);
-        const minute = Number(minutePart);
-
-        if (Number.isFinite(hour) && Number.isFinite(minute)) {
-            start.setUTCHours(hour, minute, 0, 0);
-        }
+function parseEventStart(input: {
+    eventDate?: string;
+    eventTime?: string;
+    timezone?: string;
+    startAtUTC?: Date | string;
+}): Date | null {
+    if (input.startAtUTC) {
+        const stored = new Date(input.startAtUTC);
+        if (!Number.isNaN(stored.getTime())) return stored;
     }
 
-    return start;
+    if (!input.eventDate || !input.eventTime) return null;
+
+    try {
+        return getEventStartUTC(input.eventDate, input.eventTime, input.timezone);
+    } catch {
+        return null;
+    }
 }
 
-function isWithinWindow(eventDate?: string, eventTime?: string, windowMinutes = 15): boolean {
-    const start = parseEventStart(eventDate, eventTime);
+function isWithinWindow(input: Parameters<typeof parseEventStart>[0], windowMinutes = 15): boolean {
+    const start = parseEventStart(input);
     if (!start) return false;
 
     const diff = Math.abs(Date.now() - start.getTime());
     return diff <= windowMinutes * 60 * 1000;
 }
 
-function isTicketExpired(eventDate?: string, eventTime?: string): boolean {
-    const start = parseEventStart(eventDate, eventTime);
+function isTicketExpired(input: Parameters<typeof parseEventStart>[0]): boolean {
+    const start = parseEventStart(input);
     if (!start) return false;
 
     return Date.now() > start.getTime() + GATE_CHECKIN_GRACE_MS;
@@ -531,9 +533,11 @@ export async function verifyTicket(ticketId: string, eventId: string): Promise<V
 
         await connectToDatabase();
 
-        const event = await Event.findById(eventId).select("date time").lean<{
+        const event = await Event.findById(eventId).select("date time timezone startAtUTC").lean<{
             date?: string;
             time?: string;
+            timezone?: string;
+            startAtUTC?: Date;
         } | null>();
 
         if (!event) {
@@ -571,7 +575,7 @@ export async function verifyTicket(ticketId: string, eventId: string): Promise<V
             };
         }
 
-        if (isTicketExpired(event.date, event.time)) {
+        if (isTicketExpired({ eventDate: event.date, eventTime: event.time, timezone: event.timezone, startAtUTC: event.startAtUTC })) {
             return { valid: false, reason: "expired" };
         }
 
@@ -633,16 +637,18 @@ export async function checkInTicket(
             };
         }
 
-        const event = await Event.findById(eventId).select("date time").lean<{
+        const event = await Event.findById(eventId).select("date time timezone startAtUTC").lean<{
             date?: string;
             time?: string;
+            timezone?: string;
+            startAtUTC?: Date;
         } | null>();
 
         if (!event) {
             return { success: false, reason: "not_found" };
         }
 
-        if (isTicketExpired(event.date, event.time)) {
+        if (isTicketExpired({ eventDate: event.date, eventTime: event.time, timezone: event.timezone, startAtUTC: event.startAtUTC })) {
             return { success: false, reason: "expired" };
         }
 
@@ -714,9 +720,11 @@ export async function autoCheckInOnRoomJoin(eventId: string): Promise<AutoCheckI
 
         await connectToDatabase();
 
-        const event = await Event.findById(eventId).select("date time mode").lean<{
+        const event = await Event.findById(eventId).select("date time timezone startAtUTC mode").lean<{
             date?: string;
             time?: string;
+            timezone?: string;
+            startAtUTC?: Date;
             mode?: string;
         } | null>();
 
@@ -729,7 +737,7 @@ export async function autoCheckInOnRoomJoin(eventId: string): Promise<AutoCheckI
             return { success: false, reason: "wrong_mode" };
         }
 
-        if (!isWithinWindow(event.date, event.time, 15)) {
+        if (!isWithinWindow({ eventDate: event.date, eventTime: event.time, timezone: event.timezone, startAtUTC: event.startAtUTC }, 15)) {
             return { success: false, reason: "outside_window" };
         }
 

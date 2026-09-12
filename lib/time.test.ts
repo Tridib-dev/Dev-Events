@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getEventStartUTC , displayEventTime} from "./time";
+import { getEventStartUTC, displayEventTime, reportingDateKey, resolveEventSchedule } from "./time";
 
 describe("getEventStartUTC", () => {
   it("converts an India event (Asia/Kolkata, +5:30) correctly", () => {
@@ -74,5 +74,36 @@ describe("displayEventTime — mode awareness", () => {
     const instant = getEventStartUTC("2026-12-05", "19:00", "Asia/Kolkata");
     const result = displayEventTime(instant, "Asia/Kolkata", "Asia/Calcutta", "In-Person");
     expect(result.secondary).toBeUndefined();
+  });
+});
+
+describe("event schedule compatibility", () => {
+  it("prefers the stored UTC instant and marks missing timezone data as legacy", () => {
+    const result = resolveEventSchedule({
+      date: "2026-12-05T00:00:00.000Z",
+      time: "19:00",
+      startAtUTC: "2026-12-05T13:30:00.000Z",
+    });
+
+    expect(result.instant.toISOString()).toBe("2026-12-05T13:30:00.000Z");
+    expect(result.timezone).toBe("Asia/Kolkata");
+    expect(result.isLegacy).toBe(true);
+  });
+
+  it("groups an absolute timestamp in the selected reporting timezone", () => {
+    expect(reportingDateKey("2026-12-05T23:30:00.000Z", "Asia/Kolkata")).toBe("2026-12-06");
+    expect(reportingDateKey("2026-12-05T23:30:00.000Z", "America/New_York")).toBe("2026-12-05");
+  });
+
+  it("falls back safely for an invalid legacy timezone", () => {
+    const result = resolveEventSchedule({
+      date: "2026-12-05",
+      time: "19:00",
+      timezone: "Not/AZone",
+    });
+
+    expect(result.timezone).toBe("Asia/Kolkata");
+    expect(result.isLegacy).toBe(true);
+    expect(result.instant.toISOString()).toBe("2026-12-05T13:30:00.000Z");
   });
 });

@@ -11,11 +11,12 @@ export interface CountdownTimerProps {
 
 function formatRemaining(ms: number) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  const h = Math.floor((totalSeconds % 86400) / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
   const pad = (n: number) => n.toString().padStart(2, "0");
-  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  return `${days}d ${pad(h)}h ${pad(m)}m ${pad(s)}s`;
 }
 
 export default function CountdownTimer({ target, onComplete, className }: CountdownTimerProps) {

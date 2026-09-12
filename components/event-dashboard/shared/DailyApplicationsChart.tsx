@@ -20,8 +20,10 @@ function groupByMonth(data: { day: string; applications: number }[]) {
 
 export function DailyApplicationsChart({
     data,
+    reportingTimezone,
 }: {
     data: { day: string; applications: number }[];
+    reportingTimezone?: string;
 }) {
     const [range, setRange] = useState<ChartRange>("day");
     const chartData = useMemo(
@@ -35,6 +37,9 @@ export function DailyApplicationsChart({
                 <p className="text-base font-semibold leading-none tracking-tight text-slate-900">
                     Day-by-day applications
                 </p>
+                {reportingTimezone && (
+                    <p className="text-[10px] text-slate-400">{reportingTimezone}</p>
+                )}
                 <Tabs value={range} onValueChange={(value) => setRange(value as ChartRange)}>
                     <TabsList className="h-8 rounded-lg border border-slate-200 bg-slate-50 p-1">
                         <TabsTrigger

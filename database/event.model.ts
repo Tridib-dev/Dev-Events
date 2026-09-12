@@ -1,5 +1,7 @@
 import { HydratedDocument, Model, Schema, model, models } from "mongoose";
 import { EVENT_CATEGORIES, EventCategory } from "@/lib/constants/event-categories";
+import { DEFAULT_EVENT_TIMEZONE, getEventStartUTC } from "@/lib/time";
+import { DateTime } from "luxon";
 
 export interface IAgendaItem {
   startTime: string;
@@ -267,7 +269,14 @@ const eventSchema = new Schema<IEvent>(
     stateSlug: { type: String, trim: true, lowercase: true },
     citySlug: { type: String, trim: true, lowercase: true },
     categorySlug: { type: String, trim: true, lowercase: true },
-    timezone: { type: String, trim: true },
+    timezone: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: (value: string) => DateTime.local().setZone(value).isValid,
+        message: "timezone must be a valid IANA timezone.",
+      },
+    },
     startAtUTC: { type: Date, index: true },
   },
   {
@@ -402,6 +411,19 @@ eventSchema.pre("validate", function validateAndNormalizeEvent(this: EventDocume
   // Normalize date/time for consistent persistence and querying.
   this.date = normalizeDateToIso(this.date);
   this.time = normalizeTime(this.time);
+
+  // New events always get a complete canonical schedule. Existing legacy
+  // documents remain readable without being rewritten unless their schedule
+  // is explicitly changed.
+  if (this.isNew && !this.timezone) {
+    this.timezone = DEFAULT_EVENT_TIMEZONE;
+  }
+  if (
+    this.timezone &&
+    (this.isNew || this.isModified("date") || this.isModified("time") || this.isModified("timezone"))
+  ) {
+    this.startAtUTC = getEventStartUTC(this.date, this.time, this.timezone);
+  }
 });
 
 eventSchema.index({ tags: 1 });

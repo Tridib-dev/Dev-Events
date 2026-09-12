@@ -5,6 +5,8 @@ import { auth } from "@clerk/nextjs/server";
 import { isValidObjectId, type Types } from "mongoose";
 import connectToDatabase from "@/lib/mongodb";
 import { Room, RoomMember } from "@/database/Room.model";
+import { Order } from "@/database/Order.model";
+import { Booking } from "@/database/booking.model";
 import { RoomDiscussionVote, RoomMessage, RoomQuestion, RoomUpdate } from "@/database/room-discussion.model";
 import { User } from "@/database/User.model";
 import type { RoomMemberRole } from "@/database/Room.model";
@@ -227,7 +229,40 @@ function buildVoteState(votes: RoomDiscussionVoteDoc[], currentClerkId: string) 
 
 export async function getRoomDiscussion(eventId: string): Promise<RoomDiscussionPayload | null> {
   try {
-    const context = await getRoomContext(eventId);
+    let context = await getRoomContext(eventId);
+
+    // Attendees can see pre-room announcements before they have joined the
+    // video room. Do not create membership as a side effect of a read, and do
+    // not grant this fallback to users who previously left or were banned.
+    if (!context.ok && context.reason === "unauthorized" && isValidObjectId(eventId)) {
+      const { userId: clerkId } = await auth();
+      if (!clerkId) return null;
+
+      await connectToDatabase();
+      const room = await Room.findOne({ eventId }).select("_id").lean<{ _id: Types.ObjectId } | null>();
+      if (!room) return null;
+
+      const existingMember = await RoomMember.findOne({ roomId: room._id, clerkId })
+        .select("bannedAt leftAt")
+        .lean<{ bannedAt?: Date | null; leftAt?: Date | null } | null>();
+      if (existingMember) return null;
+
+      const [paidOrder, freeBooking] = await Promise.all([
+        Order.findOne({ eventId, clerkId, status: "paid" }).select("_id").lean(),
+        Booking.findOne({ eventId, clerkId }).select("_id").lean(),
+      ]);
+      if (!paidOrder && !freeBooking) return null;
+
+      context = {
+        ok: true,
+        roomId: room._id,
+        roomMember: {
+          roomId: room._id,
+          clerkId,
+          role: "attendee",
+        },
+      };
+    }
     if (!context.ok) return null;
 
     const [messages, questions, updates, votes] = await Promise.all([

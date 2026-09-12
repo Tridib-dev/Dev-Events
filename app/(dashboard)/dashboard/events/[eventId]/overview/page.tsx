@@ -35,7 +35,15 @@ export default async function EventOverviewPage({
                 category={data.event.category}
                 date={data.event.date}
                 time={data.event.time}
+                timezone={data.event.timezone}
+                startAtUTC={data.event.startAtUTC}
+                mode={data.event.mode}
             />
+            {data.event.isLegacySchedule && (
+                <p className="text-center text-[11px] text-amber-600">
+                    This event uses a legacy schedule fallback. Confirm its timezone in settings before sharing it internationally.
+                </p>
+            )}
 
             <section className="grid grid-cols-3 gap-3">
                 <StatCard
@@ -91,7 +99,10 @@ export default async function EventOverviewPage({
             <div className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
                 <Card className="flex h-full min-h-0 flex-col">
                     <CardContent className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
-                        <DailyApplicationsChart data={data.dailyApplications} />
+                        <DailyApplicationsChart
+                            data={data.dailyApplications}
+                            reportingTimezone={data.event.timezone}
+                        />
                     </CardContent>
                 </Card>
 
