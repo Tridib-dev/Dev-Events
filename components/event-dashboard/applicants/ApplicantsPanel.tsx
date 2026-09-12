@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApplicantFilter, EventApplicantsData } from "@/lib/event-dashboard/applicants";
 import ViewerTimestampParts from "@/components/ViewerTimestampParts";
+import ViewerTimezoneLabel from "@/components/ViewerTimezoneLabel";
 
 const FILTERS: { id: ApplicantFilter; label: string }[] = [
     { id: "all", label: "All" },
@@ -153,7 +154,7 @@ export default function ApplicantsPanel({
                         },
                         {
                             key: "bookedTime",
-                            header: "Time",
+                            header: <span>Time <span className="normal-case tracking-normal text-slate-400">[<ViewerTimezoneLabel />]</span></span>,
                             cell: (row) => (
                                 <ViewerTimestampParts value={formatDate(row.bookedAt)} part="time" className="text-[12px] text-slate-500" />
                             ),

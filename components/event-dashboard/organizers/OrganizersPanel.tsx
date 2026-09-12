@@ -13,6 +13,7 @@ import { removeCoOrganizer } from "@/lib/actions/gate.actions";
 import type { EventOrganizersData } from "@/lib/event-dashboard/organizers";
 import { AddCoOrganizerModal } from "@/components/profileCard";
 import ViewerTimestampParts from "@/components/ViewerTimestampParts";
+import ViewerTimezoneLabel from "@/components/ViewerTimezoneLabel";
 
 type TabId = "all" | "active" | "pending" | "declined";
 
@@ -152,9 +153,9 @@ export default function OrganizersPanel({
                         <Tabs
                             value={tab}
                             onValueChange={(value) => setTab(value as TabId)}
-                            className="min-w-0 flex-[2]"
+                            className="min-w-0 flex-[2] sm:w-fit sm:flex-none"
                         >
-                            <TabsList className="grid h-10 w-full grid-cols-4 items-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
+                            <TabsList className="grid h-10 w-full grid-cols-4 items-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm sm:w-fit">
                                 {tabs.map((item) => (
                                     <TabsTrigger
                                         key={item.id}
@@ -216,7 +217,7 @@ export default function OrganizersPanel({
                                     },
                                     {
                                         key: "sinceTime",
-                                        header: "Time",
+                                        header: <span>Time <span className="normal-case tracking-normal text-slate-400">[<ViewerTimezoneLabel />]</span></span>,
                                         cell: (row: CommitteeRow) => (
                                             <ViewerTimestampParts value={row.sinceValue} part="time" className="text-[12px] text-slate-500" />
                                         ),
@@ -265,7 +266,7 @@ export default function OrganizersPanel({
                                     },
                                     {
                                         key: "addedTime",
-                                        header: "Time",
+                                        header: <span>Time <span className="normal-case tracking-normal text-slate-400">[<ViewerTimezoneLabel />]</span></span>,
                                         cell: (row) => (
                                             <ViewerTimestampParts value={row.sinceValue} part="time" className="text-[12px] text-slate-500" />
                                         ),
@@ -330,7 +331,7 @@ export default function OrganizersPanel({
                             },
                             {
                                 key: "invitedTime",
-                                header: "Time",
+                                header: <span>Time <span className="normal-case tracking-normal text-slate-400">[<ViewerTimezoneLabel />]</span></span>,
                                 cell: (row) => (
                                     <ViewerTimestampParts value={row.sinceValue} part="time" className="text-[12px] text-slate-500" />
                                 ),
@@ -365,7 +366,7 @@ export default function OrganizersPanel({
                             },
                             {
                                 key: "respondedTime",
-                                header: "Time",
+                                header: <span>Time <span className="normal-case tracking-normal text-slate-400">[<ViewerTimezoneLabel />]</span></span>,
                                 cell: (row) => (
                                     <ViewerTimestampParts value={row.sinceValue} part="time" className="text-[12px] text-slate-500" />
                                 ),

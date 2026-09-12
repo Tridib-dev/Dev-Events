@@ -27,7 +27,6 @@ export default function ViewerTimestampParts({
   const timeLabel = new Intl.DateTimeFormat(undefined, {
     hour: "2-digit",
     minute: "2-digit",
-    timeZoneName: "short",
   }).format(date);
 
   if (part === "date") return <span className={className}>{dateLabel}</span>;

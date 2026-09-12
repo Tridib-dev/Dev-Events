@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface DataTableColumn<T> {
     key: string;
-    header: string;
+    header: React.ReactNode;
     cell: (row: T) => React.ReactNode;
     className?: string;
 }
